@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="NOIR Coffee — Premium artisan coffee experience. Handcrafted beverages, ethically sourced beans, and a dark, immersive atmosphere.">
+    <title>NOIR Coffee | Premium Dark Roast Experience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="loader-content">
+            <div class="loader-ring">
+                <div class="loader-ring-inner"></div>
+            </div>
+            <div class="loader-logo">NOIR</div>
+            <div class="loader-tagline">COFFEE EXPERIENCE</div>
+            <div class="loader-bar">
+                <div class="loader-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ambient Background Elements -->
+    <div id="ambient-particles"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div id="cursor-glow"></div>
+
+    <!-- Creative Floating Elements -->
+    <div class="floating-elements" aria-hidden="true">
+        <div class="f-element f-bean-1">☕</div>
+        <div class="f-element f-bean-2">☕</div>
+        <div class="f-element f-bean-3">☕</div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="scroll-progress" id="scrollProgress"></div>
+        <div class="nav-container">
+            <a href="#home" class="nav-logo" id="navLogo">
+                <span class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                        <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                        <line x1="6" y1="2" x2="6" y2="4" />
+                        <line x1="10" y1="2" x2="10" y2="4" />
+                        <line x1="14" y1="2" x2="14" y2="4" />
+                    </svg>
+                </span>
+                <div class="logo-text-group">
+                    <span class="logo-text">NOIR</span>
+                    <span class="logo-sub">COFFEE</span>
+                </div>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home" class="nav-link active">Home</a></li>
+                <li><a href="#about" class="nav-link">Story</a></li>
+                <li><a href="#menu" class="nav-link">Menu</a></li>
+                <li><a href="#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="#testimonials" class="nav-link">Reviews</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="cart-toggle" id="cartToggle" aria-label="View Cart">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                        <path d="M3 6h18" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    <span class="cart-count">0</span>
+                </button>
+                <a href="#menu" class="nav-cta">
+                    <span>Order Now</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                </a>
+                <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Cart Sidebar/Modal -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Your Order</h3>
+            <button class="cart-close" id="cartClose">✕</button>
+        </div>
+        <div class="cart-items" id="cartItemsContainer">
+            <!-- Dynamic items -->
+            <div class="cart-empty-state">
+                <p>Your cart is empty.</p>
+                <a href="#menu" class="btn btn-ghost btn-sm">Start Ordering</a>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cartTotalValue">Rs. 0</span>
+            </div>
+            <button class="btn btn-primary btn-full" id="checkoutBtn">Place Order</button>
+        </div>
+
+        <!-- Active Orders Section -->
+        <div class="active-orders-section" id="activeOrdersSection"
+            style="display: none; padding: 20px; border-top: 1px solid var(--border-subtle); background: rgba(200, 169, 126, 0.05);">
+            <h4 style="color: var(--accent); margin-bottom: 15px; font-size: 0.9rem; letter-spacing: 1px;">ACTIVE ORDERS
+            </h4>
+            <div id="myOrdersItems">
+                <!-- User's pending orders will be listed here -->
+            </div>
+        </div>
+    </div>
+    <div class="overlay" id="cartOverlay"></div>
+
+    <!-- Floating Order Tracker Badge (Optional UI) -->
+    <div id="orderTrackerBadge"
+        style="display: none; position: fixed; bottom: 30px; left: 30px; z-index: 999; background: var(--bg-card); border: 1px solid var(--accent); padding: 12px 20px; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); align-items: center; gap: 10px; animation: slideUp 0.5s ease;"
+        onclick="openCart()">
+        <span class="pulsating-dot"></span>
+        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Tracking 1 Order...</span>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Finalize Order</h3>
+                <button class="modal-close" id="checkoutClose">✕</button>
+            </div>
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="orderName" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="orderPhone" required placeholder="07XXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label>Table Number (For Dine-in)</label>
+                    <input type="number" id="orderTable" placeholder="Optional">
+                </div>
+                <div class="order-summary-small" id="checkoutSummary">
+                    <!-- Items list -->
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Submit Order</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <span class="mobile-menu-label">NAVIGATION</span>
+            </div>
+            <a href="#home" class="mobile-link" data-number="01">Home</a>
+            <a href="#about" class="mobile-link" data-number="02">Our Story</a>
+            <a href="#menu" class="mobile-link" data-number="03">Menu</a>
+            <a href="#gallery" class="mobile-link" data-number="04">Gallery</a>
+            <a href="#testimonials" class="mobile-link" data-number="05">Reviews</a>
+            <a href="#contact" class="mobile-link" data-number="06">Contact</a>
+            <div class="mobile-menu-footer">
+                <a href="#menu" class="mobile-cta">Order Now</a>
+                <div class="mobile-social">
+                    <a href="#">IG</a>
+                    <a href="#">FB</a>
+                    <a href="#">TW</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== HERO SECTION ==================== -->
+    <section id="home" class="hero">
+        <div class="hero-bg">
+            <div class="hero-image-wrap">
+                <img src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=1920&q=80" alt="Coffee beans"
+                    class="hero-bg-img" id="heroImg" loading="eager">
+            </div>
+            <div class="hero-overlay"></div>
+            <div class="hero-grain"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge reveal-up">
+                <span class="badge-diamond">◆</span>
+                <span>EST. 2020 — PREMIUM ARTISAN COFFEE</span>
+                <span class="badge-diamond">◆</span>
+            </div>
+            <h1 class="hero-title">
+                <span class="title-line reveal-up" style="--delay: 0.2s">Where Every</span>
+                <span class="title-line reveal-up" style="--delay: 0.4s">Sip Tells a</span>
+                <span class="title-line title-accent reveal-up" style="--delay: 0.6s"><em>Story</em></span>
+            </h1>
+            <p class="hero-description reveal-up" style="--delay: 0.8s">
+                Experience the art of coffee in its purest form. Handcrafted beverages,
+                ethically sourced beans, and a space designed for those who appreciate
+                the finer things.
+            </p>
+            <div class="hero-buttons reveal-up" style="--delay: 1s">
+                <a href="#menu" class="btn btn-primary">
+                    <span>Explore Menu</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                </a>
+                <a href="#about" class="btn btn-ghost">
+                    <span>Our Story</span>
+                </a>
+            </div>
+        </div>
+        <div class="hero-bottom">
+            <div class="hero-stats reveal-up" style="--delay: 1.2s">
+                <div class="stat">
+                    <span class="stat-number" data-target="15">0</span><span class="stat-plus">+</span>
+                    <span class="stat-label">Coffee Blends</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-number" data-target="10000">0</span><span class="stat-plus">+</span>
+                    <span class="stat-label">Happy Customers</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-number" data-target="5">0</span>
+                    <span class="stat-label">Years of Excellence</span>
+                </div>
+            </div>
+            <div class="hero-scroll">
+                <div class="scroll-indicator">
+                    <div class="scroll-mouse">
+                        <div class="scroll-dot"></div>
+                    </div>
+                    <span>Scroll to explore</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ABOUT SECTION ==================== -->
+    <section id="about" class="about section">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-images">
+                    <div class="about-img-main reveal-left">
+                        <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80"
+                            alt="Coffee brewing" class="about-photo" id="aboutImg1">
+                        <div class="about-img-badge">
+                            <span class="badge-number">5+</span>
+                            <span class="badge-text">Years of<br>Excellence</span>
+                        </div>
+                    </div>
+                    <div class="about-img-accent reveal-left" style="--delay: 0.1s">
+                        <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&q=80"
+                            alt="Coffee details" class="about-photo" id="aboutImg3">
+                    </div>
+                    <div class="about-img-secondary reveal-left" style="--delay: 0.2s">
+                        <img src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=80"
+                            alt="Coffee beans roasting" class="about-photo" id="aboutImg2">
+                    </div>
+                    <div class="about-float-card">
+                        <img src="https://images.unsplash.com/photo-1511920170033-f83969a4c34b?w=200&q=80" id="awardImg"
+                            alt="Award Image" class="float-card-img">
+                        <div class="float-card-content-wrap">
+                            <div class="float-card-icon">🏆</div>
+                            <div class="float-card-text">Best Coffee<br>Shop 2025</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-content">
+                    <div class="section-label reveal-up">
+                        <span class="label-line"></span>
+                        <span>Our Story</span>
+                    </div>
+                    <h2 class="section-title reveal-up">Crafted with <em>Passion</em>,<br>Served with Love</h2>
+                    <p class="about-text reveal-up">
+                        Born from a deep love for the art of coffee, NOIR Coffee was established in 2020
+                        with a simple mission — to create a sanctuary where every cup is a masterpiece.
+                    </p>
+                    <p class="about-text reveal-up">
+                        We source our beans from the finest estates across Ethiopia, Colombia, and Guatemala,
+                        ensuring every sip carries the rich, complex flavors that true coffee lovers crave.
+                    </p>
+                    <div class="about-features">
+                        <div class="feature reveal-up" style="--delay: 0.1s">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Ethically Sourced</h4>
+                                <p>Direct trade relationships with farmers worldwide</p>
+                            </div>
+                        </div>
+                        <div class="feature reveal-up" style="--delay: 0.2s">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <path
+                                        d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Fresh Roasted Daily</h4>
+                                <p>Small-batch roasting for peak flavor every time</p>
+                            </div>
+                        </div>
+                        <div class="feature reveal-up" style="--delay: 0.3s">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Handcrafted Drinks</h4>
+                                <p>Every drink made with artisan precision and care</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== MARQUEE ==================== -->
+    <div class="marquee-section">
+        <div class="marquee-track">
+            <div class="marquee-content">
+                <span>ESPRESSO</span><span class="marquee-dot">◆</span>
+                <span>CAPPUCCINO</span><span class="marquee-dot">◆</span>
+                <span>LATTE ART</span><span class="marquee-dot">◆</span>
+                <span>COLD BREW</span><span class="marquee-dot">◆</span>
+                <span>MOCHA</span><span class="marquee-dot">◆</span>
+                <span>MACCHIATO</span><span class="marquee-dot">◆</span>
+                <span>AMERICANO</span><span class="marquee-dot">◆</span>
+                <span>AFFOGATO</span><span class="marquee-dot">◆</span>
+                <span>ESPRESSO</span><span class="marquee-dot">◆</span>
+                <span>CAPPUCCINO</span><span class="marquee-dot">◆</span>
+                <span>LATTE ART</span><span class="marquee-dot">◆</span>
+                <span>COLD BREW</span><span class="marquee-dot">◆</span>
+                <span>MOCHA</span><span class="marquee-dot">◆</span>
+                <span>MACCHIATO</span><span class="marquee-dot">◆</span>
+                <span>AMERICANO</span><span class="marquee-dot">◆</span>
+                <span>AFFOGATO</span><span class="marquee-dot">◆</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MENU SECTION ==================== -->
+    <section id="menu" class="menu section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label reveal-up">
+                    <span class="label-line"></span>
+                    <span>Our Menu</span>
+                </div>
+                <h2 class="section-title reveal-up">Signature <em>Beverages</em></h2>
+                <p class="section-desc reveal-up">Expertly crafted drinks that elevate your coffee experience</p>
+            </div>
+            <div class="menu-tabs reveal-up">
+                <button class="menu-tab active" data-category="hot">
+                    <span class="tab-icon">🔥</span>
+                    <span>Hot Drinks</span>
+                </button>
+                <button class="menu-tab" data-category="cold">
+                    <span class="tab-icon">🧊</span>
+                    <span>Cold Drinks</span>
+                </button>
+                <button class="menu-tab" data-category="special">
+                    <span class="tab-icon">✨</span>
+                    <span>Specials</span>
+                </button>
+                <button class="menu-tab" data-category="food">
+                    <span class="tab-icon">🥐</span>
+                    <span>Food</span>
+                </button>
+            </div>
+            <div class="menu-grid" id="menuGrid">
+                <!-- Items populated by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== PROCESS SECTION ==================== -->
+    <section id="process" class="process section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label reveal-up">
+                    <span class="label-line"></span>
+                    <span>Our Process</span>
+                </div>
+                <h2 class="section-title reveal-up">From Bean to <em>Cup</em></h2>
+                <p class="section-desc reveal-up">Every step is carefully crafted for your perfect experience</p>
+            </div>
+            <div class="process-steps">
+                <div class="process-step reveal-up" style="--delay: 0.1s">
+                    <div class="step-number">01</div>
+                    <div class="step-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </div>
+                    <h3>Source</h3>
+                    <p>Handpicked beans from ethical farms across 12+ countries</p>
+                </div>
+                <div class="process-connector"></div>
+                <div class="process-step reveal-up" style="--delay: 0.2s">
+                    <div class="step-number">02</div>
+                    <div class="step-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
+                        </svg>
+                    </div>
+                    <h3>Roast</h3>
+                    <p>Small-batch roasting daily for peak flavor and aroma</p>
+                </div>
+                <div class="process-connector"></div>
+                <div class="process-step reveal-up" style="--delay: 0.3s">
+                    <div class="step-number">03</div>
+                    <div class="step-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                            <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                        </svg>
+                    </div>
+                    <h3>Brew</h3>
+                    <p>Precision brewing techniques for the perfect extraction</p>
+                </div>
+                <div class="process-connector"></div>
+                <div class="process-step reveal-up" style="--delay: 0.4s">
+                    <div class="step-number">04</div>
+                    <div class="step-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path
+                                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                    </div>
+                    <h3>Serve</h3>
+                    <p>Crafted with love and presented with artisan care</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== GALLERY SECTION ==================== -->
+    <section id="gallery" class="gallery section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label reveal-up">
+                    <span class="label-line"></span>
+                    <span>Gallery</span>
+                </div>
+                <h2 class="section-title reveal-up">A Glimpse Inside <em>NOIR</em></h2>
+                <p class="section-desc reveal-up">Our space, our craft, our passion</p>
+            </div>
+            <div class="gallery-grid" id="galleryGrid">
+                <div class="gallery-item gallery-item-large reveal-up">
+                    <img src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&q=80" alt="Latte Art"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">Featured</span>
+                        <h3>Latte Art Mastery</h3>
+                    </div>
+                </div>
+                <div class="gallery-item reveal-up" style="--delay: 0.1s">
+                    <img src="https://images.unsplash.com/photo-1559496417-e7f25cb247f3?w=600&q=80" alt="Coffee Beans"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Premium Beans</h3>
+                    </div>
+                </div>
+                <div class="gallery-item reveal-up" style="--delay: 0.2s">
+                    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&q=80" alt="Pastries"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Fresh Pastries</h3>
+                    </div>
+                </div>
+                <div class="gallery-item reveal-up" style="--delay: 0.15s">
+                    <img src="https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=600&q=80" alt="Interior"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <h3>Cozy Interior</h3>
+                    </div>
+                </div>
+                <div class="gallery-item gallery-item-large reveal-up" style="--delay: 0.25s">
+                    <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=800&q=80" alt="Cold Brew"
+                        loading="lazy">
+                    <div class="gallery-overlay">
+                        <span class="gallery-tag">New</span>
+                        <h3>Cold Brew Collection</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== TESTIMONIALS SECTION ==================== -->
+    <section id="testimonials" class="testimonials section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label reveal-up">
+                    <span class="label-line"></span>
+                    <span>Testimonials</span>
+                </div>
+                <h2 class="section-title reveal-up">What Our <em>Guests</em> Say</h2>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card reveal-up" style="--delay: 0.1s">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">The best coffee I've ever had. The atmosphere is incredible — dark,
+                        moody, and perfect for deep focus. I'm here every morning without fail.</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"
+                                alt="Kasun" id="avatar1">
+                        </div>
+                        <div>
+                            <h4>Kasun Perera</h4>
+                            <span>Regular Customer</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card featured reveal-up" style="--delay: 0.2s">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Their cold brew is absolutely divine. Smooth, rich, and perfectly
+                        balanced. NOIR has set a new standard for specialty coffee in the city.</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&q=80"
+                                alt="Shenali" id="avatar2">
+                        </div>
+                        <div>
+                            <h4>Shenali De Silva</h4>
+                            <span>Coffee Enthusiast</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card reveal-up" style="--delay: 0.3s">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">Not just great coffee — it's an experience. The staff knows their
+                        craft, and every visit feels uniquely special. Highly recommend!</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"
+                                alt="Ravindu" id="avatar3">
+                        </div>
+                        <div>
+                            <h4>Ravindu Fernando</h4>
+                            <span>Food Blogger</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA SECTION ==================== -->
+    <section id="cta" class="cta-section">
+        <div class="cta-bg">
+            <img src="https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=1920&q=80" alt="" id="ctaImg"
+                loading="lazy">
+            <div class="cta-overlay"></div>
+        </div>
+        <div class="container">
+            <div class="cta-content reveal-up">
+                <div class="cta-badge">LIMITED TIME</div>
+                <h2>Ready for Your<br>Perfect Cup?</h2>
+                <p>Visit us today or place your order online.<br>Life's too short for bad coffee.</p>
+                <div class="cta-buttons">
+                    <a href="#contact" class="btn btn-primary btn-lg">
+                        <span>Visit Us Today</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                    <a href="tel:+94771234567" class="btn btn-ghost btn-lg">
+                        <span>📞 Call Now</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CONTACT SECTION ==================== -->
+    <section id="contact" class="contact section">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <div class="section-label reveal-up">
+                        <span class="label-line"></span>
+                        <span>Get in Touch</span>
+                    </div>
+                    <h2 class="section-title reveal-up">Visit <em>NOIR</em></h2>
+                    <p class="contact-desc reveal-up">We'd love to welcome you. Drop by for a cup, or reach out with any
+                        questions.</p>
+
+                    <div class="contact-details">
+                        <div class="contact-item reveal-up" style="--delay: 0.1s">
+                            <div class="contact-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Location</h4>
+                                <p id="addrText">42 Galle Road, Colombo 03<br>Sri Lanka</p>
+                            </div>
+                        </div>
+                        <div class="contact-item reveal-up" style="--delay: 0.2s">
+                            <div class="contact-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Opening Hours</h4>
+                                <p id="hoursText">Mon – Fri: 7:00 AM – 10:00 PM<br>Sat – Sun: 8:00 AM – 11:00 PM</p>
+                            </div>
+                        </div>
+                        <div class="contact-item reveal-up" style="--delay: 0.3s">
+                            <div class="contact-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <path
+                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Contact</h4>
+                                <p id="phoneText">+94 77 123 4567<br>hello@noircoffee.lk</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="social-links reveal-up">
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385h-3.047v-3.47h3.047v-2.642c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.514c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385c5.738-.9 10.126-5.864 10.126-11.854z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Twitter/X">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="TikTok">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.8a8.27 8.27 0 0 0 4.77 1.52V6.85a4.83 4.83 0 0 1-1.01-.16z" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="contact-form-wrapper reveal-up">
+                    <form class="contact-form" id="contactForm">
+                        <h3>Send us a Message</h3>
+                        <p class="form-subtitle">We'll get back to you within 24 hours</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <input type="text" id="formName" placeholder=" " required>
+                                <label for="formName">Your Name</label>
+                            </div>
+                            <div class="form-group">
+                                <input type="email" id="formEmail" placeholder=" " required>
+                                <label for="formEmail">Your Email</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <select id="formSubject" required>
+                                <option value="" disabled selected>Select Subject</option>
+                                <option value="reservation">Table Reservation</option>
+                                <option value="catering">Catering Inquiry</option>
+                                <option value="feedback">Feedback</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="formMessage" placeholder=" " rows="4" required></textarea>
+                            <label for="formMessage">Your Message</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full" id="formSubmit">
+                            <span>Send Message</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a href="#home" class="footer-logo">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                            <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                            <line x1="6" y1="2" x2="6" y2="4" />
+                            <line x1="10" y1="2" x2="10" y2="4" />
+                            <line x1="14" y1="2" x2="14" y2="4" />
+                        </svg>
+                        <div class="logo-text-group">
+                            <span class="logo-text">NOIR</span>
+                            <span class="logo-sub">COFFEE</span>
+                        </div>
+                    </a>
+                    <p class="footer-desc">Where every sip tells a story. Premium artisan coffee crafted with passion
+                        and served with love since 2020.</p>
+                </div>
+                <div class="footer-links-group">
+                    <h4>Quick Links</h4>
+                    <a href="#home">Home</a>
+                    <a href="#about">Our Story</a>
+                    <a href="#menu">Menu</a>
+                    <a href="#gallery">Gallery</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="footer-links-group">
+                    <h4>Hours</h4>
+                    <p>Monday – Friday<br><strong>7:00 AM – 10:00 PM</strong></p>
+                    <p>Saturday – Sunday<br><strong>8:00 AM – 11:00 PM</strong></p>
+                </div>
+                <div class="footer-newsletter">
+                    <h4>Stay Updated</h4>
+                    <p>Subscribe for exclusive offers and new blend announcements.</p>
+                    <form class="newsletter-form" id="newsletterForm">
+                        <input type="email" placeholder="your@email.com" required>
+                        <button type="submit">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 NOIR Coffee. All rights reserved. Crafted with ☕ & ❤️</p>
+                <div class="footer-bottom-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="admin.html" style="opacity: 0.5;">Staff Login</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 15l-6-6-6 6" />
+        </svg>
+    </button>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
