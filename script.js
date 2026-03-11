@@ -135,7 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCartUI() {
         localStorage.setItem('noir_cart', JSON.stringify(cart));
-        if (cartCount) cartCount.textContent = cart.length;
+        const totalItems = cart.reduce((acc, itm) => acc + (itm.quantity || 1), 0);
+        if (cartCount) cartCount.textContent = totalItems;
 
         if (cart.length === 0) {
             cartItemsContainer.innerHTML = '<div class="cart-empty-state"><p>Your cart is empty.</p></div>';
@@ -144,11 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             let total = 0;
             cartItemsContainer.innerHTML = cart.map((item, index) => {
-                total += parseInt(item.price.replace('Rs. ', '')) || 0;
+                const itemPrice = parseInt(item.price.replace('Rs. ', '')) || 0;
+                const itemTotal = itemPrice * (item.quantity || 1);
+                total += itemTotal;
                 return `
                     <div class="cart-item">
-                        <div><h4>${item.name}</h4><p>${item.price}</p></div>
-                        <button class="cart-item-remove" onclick="removeFromCart(${index})">✕</button>
+                        <div class="cart-item-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.price}</p>
+                        </div>
+                        <div class="cart-quantity-controls">
+                            <button class="qty-btn" onclick="changeQuantity(${index}, -1)">-</button>
+                            <span class="qty-val">${item.quantity || 1}</span>
+                            <button class="qty-btn" onclick="changeQuantity(${index}, 1)">+</button>
+                        </div>
+                        <button class="cart-item-remove" onclick="removeFromCart(${index})" title="Remove item">✕</button>
                     </div>
                 `;
             }).join('');
@@ -164,10 +175,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (itm) found = itm;
         });
         if (found) {
-            cart.push(found);
+            const existingIndex = cart.findIndex(item => item.name === name);
+            if (existingIndex > -1) {
+                cart[existingIndex].quantity = (cart[existingIndex].quantity || 1) + 1;
+            } else {
+                cart.push({ ...found, quantity: 1 });
+            }
             updateCartUI();
             showToast(`${name} added!`, '☕');
         }
+    };
+
+    window.changeQuantity = function (index, delta) {
+        if (!cart[index]) return;
+        cart[index].quantity = (cart[index].quantity || 1) + delta;
+        if (cart[index].quantity < 1) {
+            cart.splice(index, 1);
+        }
+        updateCartUI();
     };
 
     window.removeFromCart = function (index) {
@@ -189,32 +214,139 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cartClose) cartClose.addEventListener('click', closeCart);
     if (cartOverlay) cartOverlay.addEventListener('click', closeCart);
 
+    // === Order Type Toggle (Delivery / Pickup) ===
+    // Store Kegalle coordinates
+    const STORE_LAT = 7.2513;
+    const STORE_LNG = 80.3464;
+    let detectedDistanceKm = null;
+
+    // Haversine formula to get km distance between two GPS coords
+    function haversineKm(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+        return R * 2 * Math.asin(Math.sqrt(a));
+    }
+
+    function getDeliveryChargeByDistance(km) {
+        const s = JSON.parse(localStorage.getItem('noir_settings')) || {};
+        if (km <= 50) return parseInt(s.deliveryZone1) || 250;
+        if (km <= 100) return parseInt(s.deliveryZone2) || 500;
+        return parseInt(s.deliveryZone3) || 1000;
+    }
+
+    window.detectLocation = function () {
+        const btn = document.getElementById('detectLocationBtn');
+        const info = document.getElementById('distanceInfo');
+        if (!navigator.geolocation) {
+            info.textContent = '❌ Geolocation not supported by your browser.';
+            info.style.color = '#e74c3c';
+            return;
+        }
+        btn.textContent = '📶 Detecting...';
+        btn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const km = haversineKm(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG);
+                detectedDistanceKm = Math.round(km * 10) / 10;
+                const charge = getDeliveryChargeByDistance(detectedDistanceKm);
+                const zone = detectedDistanceKm <= 50 ? '(Zone 1)' : detectedDistanceKm <= 100 ? '(Zone 2)' : '(Zone 3)';
+                info.innerHTML = `📍 <strong style="color:#c8a97e">${detectedDistanceKm} km</strong> from store ${zone} &rarr; <strong style="color:#e67e22">Rs. ${charge}</strong>`;
+                info.style.color = '#aaa';
+                btn.textContent = '✅ Location Detected';
+                btn.style.background = 'rgba(46,204,113,0.15)';
+                btn.style.borderColor = '#2ecc71';
+                btn.style.color = '#2ecc71';
+                updateCheckoutBill('delivery');
+            },
+            (err) => {
+                info.textContent = '❌ Location access denied. Delivery charge will be Rs. 250 (Zone 1).';
+                info.style.color = '#e74c3c';
+                detectedDistanceKm = null;
+                btn.textContent = '📍 Try Again';
+                btn.disabled = false;
+            },
+            { timeout: 10000 }
+        );
+    };
+
+    window.selectOrderType = function (type) {
+        document.getElementById('orderType').value = type;
+
+        const btnD = document.getElementById('btnDelivery');
+        const btnP = document.getElementById('btnPickup');
+        const addrWrap = document.getElementById('addressFieldWrap');
+        const locationWrap = document.getElementById('locationDetectWrap');
+        const addrInput = document.getElementById('orderAddress');
+
+        if (type === 'delivery') {
+            btnD.classList.add('active');
+            btnP.classList.remove('active');
+            addrWrap.style.display = 'flex';
+            if (locationWrap) locationWrap.style.display = 'block';
+            addrInput.required = true;
+        } else {
+            btnP.classList.add('active');
+            btnD.classList.remove('active');
+            addrWrap.style.display = 'none';
+            if (locationWrap) locationWrap.style.display = 'none';
+            addrInput.required = false;
+            addrInput.value = '';
+            detectedDistanceKm = null;
+        }
+
+        updateCheckoutBill(type);
+    };
+
+    function updateCheckoutBill(type) {
+        let deliveryCharge = 0;
+        let distanceLabel = '';
+
+        if (type === 'delivery') {
+            if (detectedDistanceKm !== null) {
+                deliveryCharge = getDeliveryChargeByDistance(detectedDistanceKm);
+                const zone = detectedDistanceKm <= 50 ? 'Zone 1' : detectedDistanceKm <= 100 ? 'Zone 2' : 'Zone 3';
+                distanceLabel = `${detectedDistanceKm}km &middot; ${zone}`;
+            } else {
+                const s = JSON.parse(localStorage.getItem('noir_settings')) || {};
+                deliveryCharge = parseInt(s.deliveryZone1) || 250; // default zone1
+                distanceLabel = 'Zone 1 (default)';
+            }
+        }
+
+        let subtotal = 0;
+        const itemsHtml = cart.map(i => {
+            const itemPrice = parseInt(i.price.replace('Rs. ', '')) || 0;
+            const itemQty = i.quantity || 1;
+            const itemTotal = itemPrice * itemQty;
+            subtotal += itemTotal;
+            return `<div class="summary-item"><span>${itemQty}x ${i.name}</span><span>Rs. ${itemTotal}</span></div>`;
+        }).join('');
+
+        const grandTotal = subtotal + deliveryCharge;
+
+        document.getElementById('checkoutSummary').innerHTML =
+            `<div class="bill-receipt-header">☕ NOIR COFFEE — ORDER RECEIPT</div>`
+            + itemsHtml
+            + `<div class="summary-divider"></div>
+            <div class="summary-item summary-subtotal"><span>Subtotal</span><span>Rs. ${subtotal}</span></div>
+            ${type === 'delivery'
+                ? `<div class="summary-item summary-delivery"><span>🚚 Delivery <small style="opacity:0.6">${distanceLabel}</small></span><span>Rs. ${deliveryCharge}</span></div>`
+                : `<div class="summary-item" style="padding:4px 14px;opacity:0.6;font-size:0.75rem;"><span>🏪 Pickup</span><span style="color:#2ecc71;font-size:0.72rem;">Free</span></div>`
+            }
+            <div class="summary-item summary-total"><span>Grand Total</span><span>Rs. ${grandTotal}</span></div>`;
+
+        return { subtotal, deliveryCharge, grandTotal };
+    }
+
     // === Checkout ===
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', () => {
             document.getElementById('checkoutModal').classList.add('active');
-
-            const settings = JSON.parse(localStorage.getItem('noir_settings')) || {};
-            const deliveryCharge = parseInt(settings.deliveryCharge) || 250;
-
-            let subtotal = 0;
-            const itemsHtml = cart.map(i => {
-                subtotal += parseInt(i.price.replace('Rs. ', '')) || 0;
-                return `<div class="summary-item"><span>${i.name}</span><span>${i.price}</span></div>`;
-            }).join('');
-
-            const grandTotal = subtotal + deliveryCharge;
-
-            document.getElementById('checkoutSummary').innerHTML =
-                `<div class="bill-receipt-header">☕ NOIR COFFEE — ORDER RECEIPT</div>`
-                + itemsHtml
-                + `<div class="summary-divider"></div>
-                <div class="summary-item summary-subtotal"><span>Subtotal</span><span>Rs. ${subtotal}</span></div>
-                <div class="summary-item summary-delivery"><span>🚚 Delivery Charge</span><span>Rs. ${deliveryCharge}</span></div>
-                <div class="summary-item summary-total"><span>Grand Total</span><span>Rs. ${grandTotal}</span></div>`;
-
-            checkoutBtn.dataset.grandTotal = grandTotal;
-            checkoutBtn.dataset.deliveryCharge = deliveryCharge;
+            // Reset to delivery on each open
+            selectOrderType('delivery');
+            updateCheckoutBill('delivery');
         });
     }
 
@@ -222,22 +354,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     checkoutForm?.addEventListener('submit', (e) => {
         e.preventDefault();
-        const settings = JSON.parse(localStorage.getItem('noir_settings')) || {};
-        const deliveryCharge = parseInt(settings.deliveryCharge) || 250;
-        let subtotal = 0;
-        cart.forEach(i => { subtotal += parseInt(i.price.replace('Rs. ', '')) || 0; });
-        const grandTotal = subtotal + deliveryCharge;
+        const orderType = document.getElementById('orderType').value;
+        const { subtotal, deliveryCharge, grandTotal } = updateCheckoutBill(orderType);
 
         const orderId = 'ORD-' + Math.floor(Math.random() * 9000 + 1000);
         const orderData = {
             id: orderId,
             customerName: document.getElementById('orderName').value,
             phone: document.getElementById('orderPhone').value,
-            address: document.getElementById('orderAddress').value,
-            table: document.getElementById('orderTable').value || 'Takeaway/Delivery',
+            orderType: orderType,
+            address: orderType === 'delivery' ? document.getElementById('orderAddress').value : 'Pickup from store',
+            table: orderType === 'pickup' ? 'Pickup' : 'Delivery',
+            distance: detectedDistanceKm ? `${detectedDistanceKm} km` : null,
             items: cart,
             subtotal: `Rs. ${subtotal}`,
-            deliveryCharge: `Rs. ${deliveryCharge}`,
+            deliveryCharge: deliveryCharge > 0 ? `Rs. ${deliveryCharge}` : 'Free',
             total: `Rs. ${grandTotal}`,
             status: 'pending',
             date: new Date().toLocaleString(),

@@ -312,7 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('settingStorePhone')) document.getElementById('settingStorePhone').value = s.storePhone;
         if (document.getElementById('settingHoursWeek')) document.getElementById('settingHoursWeek').value = s.hoursWeek;
         if (document.getElementById('settingHoursWeekend')) document.getElementById('settingHoursWeekend').value = s.hoursWeekend;
-        if (document.getElementById('settingDeliveryCharge')) document.getElementById('settingDeliveryCharge').value = s.deliveryCharge ?? 250;
+        if (document.getElementById('settingDeliveryZone1')) document.getElementById('settingDeliveryZone1').value = s.deliveryZone1 ?? 250;
+        if (document.getElementById('settingDeliveryZone2')) document.getElementById('settingDeliveryZone2').value = s.deliveryZone2 ?? 500;
+        if (document.getElementById('settingDeliveryZone3')) document.getElementById('settingDeliveryZone3').value = s.deliveryZone3 ?? 1000;
 
         // Visual Settings
         if (document.getElementById('settingHeroImg')) document.getElementById('settingHeroImg').value = s.heroImg || '';
@@ -341,10 +343,12 @@ document.addEventListener('DOMContentLoaded', () => {
             storePhone: document.getElementById('settingStorePhone').value,
             hoursWeek: document.getElementById('settingHoursWeek').value,
             hoursWeekend: document.getElementById('settingHoursWeekend').value,
-            deliveryCharge: parseInt(document.getElementById('settingDeliveryCharge').value) || 0
+            deliveryZone1: parseInt(document.getElementById('settingDeliveryZone1').value) || 250,
+            deliveryZone2: parseInt(document.getElementById('settingDeliveryZone2').value) || 500,
+            deliveryZone3: parseInt(document.getElementById('settingDeliveryZone3').value) || 1000
         };
         localStorage.setItem('noir_settings', JSON.stringify(state.settings));
-        alert('Store settings saved! Delivery charge updated to Rs. ' + (state.settings.deliveryCharge));
+        alert(`Delivery zones saved!\nZone 1 (0-50km): Rs.${state.settings.deliveryZone1}\nZone 2 (50-100km): Rs.${state.settings.deliveryZone2}\nZone 3 (100km+): Rs.${state.settings.deliveryZone3}`);
     });
 
     document.getElementById('visualSettingsForm')?.addEventListener('submit', (e) => {
@@ -385,13 +389,19 @@ document.addEventListener('DOMContentLoaded', () => {
             <td>
                 <strong style="color:#f5f0eb">${o.customerName}</strong><br>
                 <small>📞 ${o.phone}</small><br>
-                <small style="color:#c8a97e">📍 ${o.address || 'N/A'}</small><br>
-                <small>🪑 Table: ${o.table || 'Takeaway'}</small>
+                ${o.orderType === 'pickup'
+                    ? `<small style="color:#2ecc71">🏪 Pickup from store</small>`
+                    : `<small style="color:#c8a97e">📍 ${o.address || 'N/A'}</small>`
+                }<br>
+                ${o.distance ? `<small style="color:#aaa">📶 ${o.distance} km away</small><br>` : ''}
             </td>
-            <td>${o.items.map(i => i.name).join(', ')}</td>
+            <td>${o.items.map(i => `${i.quantity || 1}x ${i.name}`).join(', ')}</td>
             <td>
                 <span style="color:#888;font-size:0.78rem">Subtotal: ${o.subtotal || o.total}</span><br>
-                <span style="color:#e67e22;font-size:0.78rem">🚚 Delivery: ${o.deliveryCharge || 'Rs. 0'}</span><br>
+                ${o.orderType === 'pickup'
+                    ? `<span style="color:#2ecc71;font-size:0.78rem">🏪 Pickup: Free</span>`
+                    : `<span style="color:#e67e22;font-size:0.78rem">🚚 Delivery: ${o.deliveryCharge || 'Rs. 0'}</span>`
+                }<br>
                 <strong style="color:#c8a97e">Total: ${o.total}</strong>
             </td>
             <td><span class="status ${o.status}">${o.status}</span></td>

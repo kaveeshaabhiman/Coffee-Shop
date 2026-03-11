@@ -166,6 +166,20 @@
 
                     <!-- LEFT: Customer Details -->
                     <div class="checkout-left-panel">
+
+                        <!-- Order Type Toggle -->
+                        <div class="order-type-toggle">
+                            <button type="button" class="order-type-btn active" id="btnDelivery" onclick="selectOrderType('delivery')">
+                                🚚 Delivery
+                                <span class="order-type-badge">+Rs.250</span>
+                            </button>
+                            <button type="button" class="order-type-btn" id="btnPickup" onclick="selectOrderType('pickup')">
+                                🏪 Pickup
+                                <span class="order-type-badge free">Free</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="orderType" value="delivery">
+
                         <div class="checkout-section-label">📋 Your Details</div>
                         <div class="checkout-field-group">
                             <div class="checkout-field">
@@ -182,19 +196,20 @@
                                     <input type="tel" id="orderPhone" placeholder="07XXXXXXXX" required>
                                 </div>
                             </div>
-                            <div class="checkout-field">
+                            <!-- Address field — hidden for pickup -->
+                            <div class="checkout-field" id="addressFieldWrap">
                                 <span class="checkout-field-icon">📍</span>
                                 <div class="checkout-field-body">
                                     <label for="orderAddress">Delivery Address</label>
-                                    <input type="text" id="orderAddress" placeholder="No. 42, Galle Road..." required>
+                                    <input type="text" id="orderAddress" placeholder="No. 42, Galle Road...">
                                 </div>
                             </div>
-                            <div class="checkout-field">
-                                <span class="checkout-field-icon">🪑</span>
-                                <div class="checkout-field-body">
-                                    <label for="orderTable">Table No. <span style="opacity:0.4;font-size:0.7rem">(Dine-in)</span></label>
-                                    <input type="number" id="orderTable" min="1" placeholder="Blank = delivery">
-                                </div>
+                            <!-- GPS Location detect (for delivery zone auto-calc) -->
+                            <div id="locationDetectWrap" style="padding: 0 2px;">
+                                <button type="button" id="detectLocationBtn" class="location-detect-btn" onclick="detectLocation()">
+                                    📍 Detect My Location
+                                </button>
+                                <div id="distanceInfo" style="font-size:0.72rem;margin-top:5px;color:#888;">Location not detected — Zone 1 rate (Rs.250) applies</div>
                             </div>
                         </div>
                     </div>

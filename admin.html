@@ -284,9 +284,24 @@
                                 <input type="text" id="settingHoursWeekend" value="8:00 AM – 11:00 PM">
                             </div>
                             <div class="form-group" style="border-left: 3px solid var(--accent); padding-left: 15px;">
-                                <label>🚚 Delivery Charge (Rs.)</label>
-                                <input type="number" id="settingDeliveryCharge" value="250" min="0" placeholder="e.g. 250">
-                                <small style="color: var(--text-muted); font-size: 0.75rem;">Customers will be charged this amount for delivery. Set 0 for free delivery.</small>
+                                <label>🚚 Delivery Charges by Distance (Kegalle based)</label>
+                                <small style="color: var(--text-muted); font-size: 0.75rem; display:block; margin-bottom:12px;">
+                                    Charge is auto-set based on customer's GPS distance from store.
+                                </small>
+                                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                                    <div>
+                                        <label style="font-size:0.72rem;color:#c8a97e">Zone 1: 0–50 km (Rs.)</label>
+                                        <input type="number" id="settingDeliveryZone1" value="250" min="0" placeholder="250">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.72rem;color:#c8a97e">Zone 2: 50–100 km (Rs.)</label>
+                                        <input type="number" id="settingDeliveryZone2" value="500" min="0" placeholder="500">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.72rem;color:#e67e22">Zone 3: 100 km+ (Rs.)</label>
+                                        <input type="number" id="settingDeliveryZone3" value="1000" min="0" placeholder="1000">
+                                    </div>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary">Save Store Settings</button>
                         </form>

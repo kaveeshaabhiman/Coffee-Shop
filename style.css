@@ -2,6 +2,96 @@
    NOIR COFFEE — Ultra Premium Dark Theme
    ============================================ */
 
+/* ===== LOCATION DETECT BUTTON ===== */
+.location-detect-btn {
+    width: 100%;
+    padding: 8px 14px;
+    background: rgba(200, 169, 126, 0.06);
+    border: 1px dashed rgba(200, 169, 126, 0.35);
+    border-radius: 8px;
+    color: #c8a97e;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+.location-detect-btn:hover:not(:disabled) {
+    background: rgba(200, 169, 126, 0.12);
+    border-color: #c8a97e;
+}
+
+.location-detect-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+/* ===== ORDER TYPE TOGGLE (DELIVERY / PICKUP) ===== */
+.order-type-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.order-type-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    color: #666;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.order-type-btn:hover {
+    border-color: rgba(200, 169, 126, 0.3);
+    color: #c8a97e;
+    background: rgba(200, 169, 126, 0.05);
+}
+
+.order-type-btn.active {
+    border-color: #c8a97e;
+    color: #f5f0eb;
+    background: rgba(200, 169, 126, 0.1);
+    box-shadow: 0 4px 16px rgba(200, 169, 126, 0.15);
+}
+
+/* "Free" pickup badge */
+.order-type-btn.active#btnPickup {
+    border-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.08);
+    box-shadow: 0 4px 16px rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}
+
+.order-type-badge {
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 20px;
+    background: rgba(230, 126, 34, 0.12);
+    color: #e67e22;
+    letter-spacing: 0.2px;
+    opacity: 0.85;
+}
+
+.order-type-badge.free {
+    background: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}
+
 /* ===== FLOATING ORDER TRACKER BADGE ===== */
 #orderTrackerBadge {
     animation: slideUp 0.5s ease;
@@ -3407,7 +3497,13 @@ body:hover #cursor-glow {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.cart-item-info {
+    flex: 1;
 }
 
 .cart-item-info h4 {
@@ -3421,12 +3517,55 @@ body:hover #cursor-glow {
     color: var(--accent);
 }
 
+.cart-quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 2px 8px;
+}
+
+.qty-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.qty-btn:hover {
+    color: var(--text-primary);
+}
+
+.qty-val {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 14px;
+    text-align: center;
+}
+
 .cart-item-remove {
     background: none;
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 1rem;
+    transition: color 0.2s;
+    padding: 4px;
+}
+
+.cart-item-remove:hover {
+    color: #ec7063;
 }
 
 .cart-footer {
