@@ -3,7 +3,59 @@
  * Handles Menu, Orders, Messages, Gallery, and Settings management
  */
 
+// ===== ADMIN PASSWORD GATE =====
+(function () {
+    const ADMIN_PASSWORD = 'K.Abhiman123';
+    const SESSION_KEY = 'noir_admin_auth';
+
+    const loginScreen = document.getElementById('loginScreen');
+    const loginForm = document.getElementById('loginForm');
+    const pwInput = document.getElementById('adminPasswordInput');
+    const loginError = document.getElementById('loginError');
+    const togglePw = document.getElementById('togglePw');
+
+    // Check if already authenticated this session
+    if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+        loginScreen.classList.add('hidden');
+        setTimeout(() => loginScreen.remove(), 700);
+    }
+
+    // Password toggle (show/hide)
+    togglePw.addEventListener('click', () => {
+        if (pwInput.type === 'password') {
+            pwInput.type = 'text';
+            togglePw.textContent = '🙈';
+        } else {
+            pwInput.type = 'password';
+            togglePw.textContent = '👁';
+        }
+    });
+
+    // Login form submit
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const entered = pwInput.value;
+
+        if (entered === ADMIN_PASSWORD) {
+            // ✅ Correct — grant access
+            sessionStorage.setItem(SESSION_KEY, 'true');
+            loginError.style.display = 'none';
+            loginScreen.classList.add('hidden');
+            setTimeout(() => loginScreen.remove(), 700);
+        } else {
+            // ❌ Wrong — show error + shake
+            loginError.style.display = 'block';
+            loginError.style.animation = 'none';
+            void loginError.offsetWidth; // trigger reflow
+            loginError.style.animation = 'shake 0.4s ease';
+            pwInput.value = '';
+            pwInput.focus();
+        }
+    });
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
+
     // --- Default Data ---
     const defaultMenu = {
         hot: [
