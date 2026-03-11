@@ -27,18 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (preloader) {
             setTimeout(() => {
                 preloader.classList.add('loaded');
-
-                // Show hero image first with a scale-in
                 if (heroImg) {
                     heroImg.classList.add('revealed');
                     setTimeout(() => heroImg.classList.add('zooming'), 2500);
                 }
-
-                // Sequential text reveal
                 document.querySelectorAll('.hero .reveal-up').forEach((el, i) => {
-                    setTimeout(() => {
-                        el.classList.add('revealed');
-                    }, 400 + (i * 150));
+                    setTimeout(() => el.classList.add('revealed'), 400 + (i * 150));
                 });
             }, 1000);
         }
@@ -48,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.scrollY > 50) nav.classList.add('scrolled');
         else nav.classList.remove('scrolled');
 
-        // Scroll progress
         const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
         const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         const scrolled = (winScroll / height) * 100;
@@ -68,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuGrid = document.getElementById('menuGrid');
     const menuTabs = document.querySelectorAll('.menu-tab');
 
-    // Fallback default menu items if localStorage is empty
     const menuItems = JSON.parse(localStorage.getItem('noir_menu')) || {
         hot: [
             { name: 'Classic Espresso', desc: 'Rich, bold, and perfectly extracted single or double shot', price: 'Rs. 450', emoji: '☕', image: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400&q=80', tag: '', status: 'available' }
@@ -113,8 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             menuGrid.style.opacity = '1';
             menuGrid.style.transform = 'translateY(0)';
-
-            // Re-observe new items
             document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach(el => revealObserver.observe(el));
         }, 300);
     }
@@ -203,11 +193,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', () => {
             document.getElementById('checkoutModal').classList.add('active');
-            let total = 0;
-            document.getElementById('checkoutSummary').innerHTML = cart.map(i => {
-                total += parseInt(i.price.replace('Rs. ', ''));
+
+            const settings = JSON.parse(localStorage.getItem('noir_settings')) || {};
+            const deliveryCharge = parseInt(settings.deliveryCharge) || 250;
+
+            let subtotal = 0;
+            const itemsHtml = cart.map(i => {
+                subtotal += parseInt(i.price.replace('Rs. ', '')) || 0;
                 return `<div class="summary-item"><span>${i.name}</span><span>${i.price}</span></div>`;
-            }).join('') + `<div class="summary-item" style="border-top:1px solid #333;margin-top:10px;padding-top:10px;font-weight:bold;"><span>Total</span><span>Rs. ${total}</span></div>`;
+            }).join('');
+
+            const grandTotal = subtotal + deliveryCharge;
+
+            document.getElementById('checkoutSummary').innerHTML =
+                `<div class="bill-receipt-header">☕ NOIR COFFEE — ORDER RECEIPT</div>`
+                + itemsHtml
+                + `<div class="summary-divider"></div>
+                <div class="summary-item summary-subtotal"><span>Subtotal</span><span>Rs. ${subtotal}</span></div>
+                <div class="summary-item summary-delivery"><span>🚚 Delivery Charge</span><span>Rs. ${deliveryCharge}</span></div>
+                <div class="summary-item summary-total"><span>Grand Total</span><span>Rs. ${grandTotal}</span></div>`;
+
+            checkoutBtn.dataset.grandTotal = grandTotal;
+            checkoutBtn.dataset.deliveryCharge = deliveryCharge;
         });
     }
 
@@ -215,14 +222,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     checkoutForm?.addEventListener('submit', (e) => {
         e.preventDefault();
+        const settings = JSON.parse(localStorage.getItem('noir_settings')) || {};
+        const deliveryCharge = parseInt(settings.deliveryCharge) || 250;
+        let subtotal = 0;
+        cart.forEach(i => { subtotal += parseInt(i.price.replace('Rs. ', '')) || 0; });
+        const grandTotal = subtotal + deliveryCharge;
+
         const orderId = 'ORD-' + Math.floor(Math.random() * 9000 + 1000);
         const orderData = {
             id: orderId,
             customerName: document.getElementById('orderName').value,
             phone: document.getElementById('orderPhone').value,
-            table: document.getElementById('orderTable').value || 'N/A',
+            address: document.getElementById('orderAddress').value,
+            table: document.getElementById('orderTable').value || 'Takeaway/Delivery',
             items: cart,
-            total: cartTotalValue.textContent,
+            subtotal: `Rs. ${subtotal}`,
+            deliveryCharge: `Rs. ${deliveryCharge}`,
+            total: `Rs. ${grandTotal}`,
             status: 'pending',
             date: new Date().toLocaleString(),
             timestamp: Date.now()
@@ -246,33 +262,110 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === Order Tracking ===
+    let countdownInterval = null; // track interval so we can clear it
+
     function renderActiveOrders() {
         const myOrdersLocal = JSON.parse(localStorage.getItem('noir_my_orders')) || [];
         const globalOrders = JSON.parse(localStorage.getItem('noir_orders')) || [];
         const section = document.getElementById('activeOrdersSection');
         const container = document.getElementById('myOrdersItems');
         const badge = document.getElementById('orderTrackerBadge');
+        const trackerList = document.getElementById('trackerOrdersList');
+        const badgeText = badge?.querySelector('.tracker-badge-text');
 
         if (!container) return;
         const tracked = globalOrders.filter(o => myOrdersLocal.some(l => l.id === o.id) && o.status === 'pending');
 
+        // Clear previous countdown
+        if (countdownInterval) clearInterval(countdownInterval);
+
         if (tracked.length > 0) {
             section.style.display = 'block';
-            badge.style.display = 'flex';
-            badge.querySelector('span:last-child').textContent = `Tracking ${tracked.length} Order...`;
-            container.innerHTML = tracked.map(o => {
+            badge.style.display = 'block';
+            if (badgeText) badgeText.textContent = `Tracking ${tracked.length} Order${tracked.length > 1 ? 's' : ''}...`;
+
+            // Helper: format seconds as M:SS
+            function formatTime(sec) {
+                const m = Math.floor(sec / 60);
+                const s = sec % 60;
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            }
+
+            // Build HTML for both panels
+            function buildOrderHTML(o, containerClass) {
                 const local = myOrdersLocal.find(l => l.id === o.id);
-                const canCancel = (Date.now() - local.timestamp) / 60000 < 5;
-                return `<div class="active-order-card" style="background:#1a1a1a;padding:12px;border-radius:8px;margin-bottom:10px;border:1px solid #333;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:#c8a97e">${o.id}</span><span style="color:#f1c40f">⌛ PENDING</span></div>
-                    ${canCancel ? `<button class="btn btn-ghost btn-sm" onclick="cancelMyOrder('${o.id}')" style="width:100%;color:#ec7063">Cancel Order</button>` : `<p style="font-size:10px;text-align:center;">Locked for prep</p>`}
-                </div>`;
-            }).join('');
+                const elapsed = Math.floor((Date.now() - local.timestamp) / 1000);
+                const remaining = Math.max(0, 300 - elapsed); // 5 min = 300s
+                const canCancel = remaining > 0;
+
+                if (containerClass === 'badge') {
+                    return `
+                        <div class="tracker-order-row">
+                            <div class="tracker-order-info">
+                                <span class="tracker-order-id">${o.id}</span>
+                                <span class="tracker-order-status">⏳ PENDING</span>
+                            </div>
+                            ${canCancel
+                                ? `<button class="tracker-cancel-btn" onclick="cancelMyOrder('${o.id}')">✕ <span class="cancel-timer-${o.id}">${formatTime(remaining)}</span></button>`
+                                : `<span class="tracker-locked">🔒 Locked</span>`
+                            }
+                        </div>`;
+                } else {
+                    return `<div class="active-order-card" style="background:#1a1a1a;padding:12px;border-radius:8px;margin-bottom:10px;border:1px solid #333;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span style="color:#c8a97e">${o.id}</span>
+                            <span style="color:#f1c40f">⏳ PENDING</span>
+                        </div>
+                        ${canCancel
+                            ? `<button class="btn btn-ghost btn-sm" onclick="cancelMyOrder('${o.id}')" style="width:100%;color:#ec7063">Cancel &nbsp;<span class="cancel-sidebar-timer-${o.id}" style="font-size:0.75rem;opacity:0.8">${formatTime(remaining)}</span></button>`
+                            : `<p style="font-size:11px;text-align:center;color:#555">🔒 Cancel time expired</p>`
+                        }
+                    </div>`;
+                }
+            }
+
+            if (trackerList) trackerList.innerHTML = tracked.map(o => buildOrderHTML(o, 'badge')).join('');
+            container.innerHTML = tracked.map(o => buildOrderHTML(o, 'sidebar')).join('');
+
+            // Live countdown — update every second
+            countdownInterval = setInterval(() => {
+                tracked.forEach(o => {
+                    const local = myOrdersLocal.find(l => l.id === o.id);
+                    if (!local) return;
+                    const elapsed = Math.floor((Date.now() - local.timestamp) / 1000);
+                    const remaining = Math.max(0, 300 - elapsed);
+
+                    // Update badge timer
+                    const badgeTimer = document.querySelector(`.cancel-timer-${o.id}`);
+                    if (badgeTimer) {
+                        if (remaining > 0) {
+                            badgeTimer.textContent = formatTime(remaining);
+                        } else {
+                            // Time up — re-render to switch to locked
+                            renderActiveOrders();
+                        }
+                    }
+
+                    // Update sidebar timer
+                    const sidebarTimer = document.querySelector(`.cancel-sidebar-timer-${o.id}`);
+                    if (sidebarTimer) sidebarTimer.textContent = formatTime(remaining);
+                });
+            }, 1000);
+
         } else {
             section.style.display = 'none';
             badge.style.display = 'none';
         }
     }
+
+    // Toggle tracker expandable panel
+    window.toggleTrackerPanel = function () {
+        const panel = document.getElementById('trackerPanel');
+        const chevron = document.getElementById('trackerChevron');
+        if (!panel) return;
+        const isOpen = panel.classList.toggle('open');
+        if (chevron) chevron.textContent = isOpen ? '▾' : '▴';
+    };
 
     window.cancelMyOrder = function (id) {
         if (!confirm('Cancel this order?')) return;
@@ -324,7 +417,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('hoursText')) document.getElementById('hoursText').innerHTML = `Mon–Fri: ${s.hoursWeek}<br>Sat–Sun: ${s.hoursWeekend}`;
             if (document.getElementById('phoneText')) document.getElementById('phoneText').innerHTML = `${s.storePhone}<br>hello@noircoffee.lk`;
 
-            // Dynamic Images
             if (s.heroImg && document.getElementById('heroImg')) document.getElementById('heroImg').src = s.heroImg;
             if (s.aboutImg1 && document.getElementById('aboutImg1')) document.getElementById('aboutImg1').src = s.aboutImg1;
             if (s.aboutImg2 && document.getElementById('aboutImg2')) document.getElementById('aboutImg2').src = s.aboutImg2;
@@ -335,7 +427,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (s.avatar3 && document.getElementById('avatar3')) document.getElementById('avatar3').src = s.avatar3;
             if (s.ctaImg && document.getElementById('ctaImg')) document.getElementById('ctaImg').src = s.ctaImg;
 
-            // Apply Section Backgrounds
             applySectionBackgrounds(s);
         }
 
@@ -347,36 +438,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="gallery-overlay">${item.tag ? `<span class="gallery-tag">${item.tag}</span>` : ''}<h3>${item.title}</h3></div>
                 </div>
             `).join('');
-
-            // Re-apply reveal and tilt
             document.querySelectorAll('.reveal-up').forEach(el => revealObserver.observe(el));
             applyGalleryTilt();
         }
     }
 
-    // Creative Section Backgrounds
     function applySectionBackgrounds(s) {
         const sections = {
-            'about': s.aboutBg,
-            'process': s.processBg,
-            'menu': s.menuBg,
-            'gallery': s.galleryBg,
-            'testimonials': s.testimonialBg,
-            'contact': s.contactBg
+            'about': s.aboutBg, 'process': s.processBg, 'menu': s.menuBg,
+            'gallery': s.galleryBg, 'testimonials': s.testimonialBg, 'contact': s.contactBg
         };
-
         for (const [id, url] of Object.entries(sections)) {
             const section = document.getElementById(id);
             if (section && url) {
-                // Check if already has a bg to avoid duplicates
                 if (section.querySelector('.section-bg')) continue;
-
                 const bgDiv = document.createElement('div');
                 bgDiv.className = 'section-bg';
-                bgDiv.innerHTML = `
-                    <div class="section-bg-overlay"></div>
-                    <img src="${url}" alt="" loading="lazy">
-                `;
+                bgDiv.innerHTML = `<div class="section-bg-overlay"></div><img src="${url}" alt="" loading="lazy">`;
                 section.prepend(bgDiv);
             }
         }
@@ -396,7 +474,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // === Floating Particles ===
     function createParticles() {
         const container = document.getElementById('ambient-particles');
         if (!container) return;
@@ -419,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // === Toast ===
     function showToast(m, i) {
         const t = document.createElement('div');
         t.className = 'toast';
@@ -444,9 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = e.clientY - rect.top - rect.height / 2;
             btn.style.transform = `translate(${x * 0.3}px, ${y * 0.5}px)`;
         });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.transform = 'translate(0, 0)';
-        });
+        btn.addEventListener('mouseleave', () => { btn.style.transform = 'translate(0, 0)'; });
     });
 
     // === Hero Parallax ===

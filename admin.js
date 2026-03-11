@@ -312,6 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('settingStorePhone')) document.getElementById('settingStorePhone').value = s.storePhone;
         if (document.getElementById('settingHoursWeek')) document.getElementById('settingHoursWeek').value = s.hoursWeek;
         if (document.getElementById('settingHoursWeekend')) document.getElementById('settingHoursWeekend').value = s.hoursWeekend;
+        if (document.getElementById('settingDeliveryCharge')) document.getElementById('settingDeliveryCharge').value = s.deliveryCharge ?? 250;
 
         // Visual Settings
         if (document.getElementById('settingHeroImg')) document.getElementById('settingHeroImg').value = s.heroImg || '';
@@ -339,10 +340,11 @@ document.addEventListener('DOMContentLoaded', () => {
             storeAddress: document.getElementById('settingStoreAddress').value,
             storePhone: document.getElementById('settingStorePhone').value,
             hoursWeek: document.getElementById('settingHoursWeek').value,
-            hoursWeekend: document.getElementById('settingHoursWeekend').value
+            hoursWeekend: document.getElementById('settingHoursWeekend').value,
+            deliveryCharge: parseInt(document.getElementById('settingDeliveryCharge').value) || 0
         };
         localStorage.setItem('noir_settings', JSON.stringify(state.settings));
-        alert('Store settings saved!');
+        alert('Store settings saved! Delivery charge updated to Rs. ' + (state.settings.deliveryCharge));
     });
 
     document.getElementById('visualSettingsForm')?.addEventListener('submit', (e) => {
@@ -379,10 +381,19 @@ document.addEventListener('DOMContentLoaded', () => {
             orderBadge.style.display = pendingCount > 0 ? 'flex' : 'none';
         }
         ordersTableBody.innerHTML = state.orders.map(o => `<tr>
-            <td><code>${o.id}</code></td>
-            <td><strong>${o.customerName}</strong><br><small>${o.phone}</small></td>
+            <td><code>${o.id}</code><br><small style="color:#666">${o.date}</small></td>
+            <td>
+                <strong style="color:#f5f0eb">${o.customerName}</strong><br>
+                <small>📞 ${o.phone}</small><br>
+                <small style="color:#c8a97e">📍 ${o.address || 'N/A'}</small><br>
+                <small>🪑 Table: ${o.table || 'Takeaway'}</small>
+            </td>
             <td>${o.items.map(i => i.name).join(', ')}</td>
-            <td>${o.total}</td>
+            <td>
+                <span style="color:#888;font-size:0.78rem">Subtotal: ${o.subtotal || o.total}</span><br>
+                <span style="color:#e67e22;font-size:0.78rem">🚚 Delivery: ${o.deliveryCharge || 'Rs. 0'}</span><br>
+                <strong style="color:#c8a97e">Total: ${o.total}</strong>
+            </td>
             <td><span class="status ${o.status}">${o.status}</span></td>
             <td>
                 ${o.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="confirmOrder('${o.id}')">Confirm</button>` : '✓'}

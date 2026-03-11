@@ -129,39 +129,93 @@
     </div>
     <div class="overlay" id="cartOverlay"></div>
 
-    <!-- Floating Order Tracker Badge (Optional UI) -->
-    <div id="orderTrackerBadge"
-        style="display: none; position: fixed; bottom: 30px; left: 30px; z-index: 999; background: var(--bg-card); border: 1px solid var(--accent); padding: 12px 20px; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); align-items: center; gap: 10px; animation: slideUp 0.5s ease;"
-        onclick="openCart()">
-        <span class="pulsating-dot"></span>
-        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Tracking 1 Order...</span>
+    <!-- Floating Order Tracker Badge -->
+    <div id="orderTrackerBadge" style="display:none; position:fixed; bottom:30px; left:30px; z-index:999; animation: slideUp 0.5s ease;">
+        <div class="tracker-badge-inner">
+            <!-- Main clickable row -->
+            <div class="tracker-badge-row" onclick="toggleTrackerPanel()">
+                <span class="pulsating-dot"></span>
+                <span class="tracker-badge-text">Tracking Order...</span>
+                <span class="tracker-badge-chevron" id="trackerChevron">▴</span>
+            </div>
+            <!-- Expandable cancel panel -->
+            <div class="tracker-panel" id="trackerPanel">
+                <div id="trackerOrdersList"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Checkout Modal -->
     <div class="modal" id="checkoutModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Finalize Order</h3>
+        <div class="modal-content checkout-modal-content">
+
+            <!-- Header -->
+            <div class="checkout-modal-header">
+                <div class="checkout-header-left">
+                    <div class="checkout-icon">☕</div>
+                    <div>
+                        <h3>Finalize Order</h3>
+                        <p class="checkout-header-sub">Review your details and bill</p>
+                    </div>
+                </div>
                 <button class="modal-close" id="checkoutClose">✕</button>
             </div>
+
             <form id="checkoutForm">
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="orderName" required>
+                <div class="checkout-two-col">
+
+                    <!-- LEFT: Customer Details -->
+                    <div class="checkout-left-panel">
+                        <div class="checkout-section-label">📋 Your Details</div>
+                        <div class="checkout-field-group">
+                            <div class="checkout-field">
+                                <span class="checkout-field-icon">👤</span>
+                                <div class="checkout-field-body">
+                                    <label for="orderName">Full Name</label>
+                                    <input type="text" id="orderName" placeholder="e.g. Kasun Perera" required>
+                                </div>
+                            </div>
+                            <div class="checkout-field">
+                                <span class="checkout-field-icon">📞</span>
+                                <div class="checkout-field-body">
+                                    <label for="orderPhone">Phone Number</label>
+                                    <input type="tel" id="orderPhone" placeholder="07XXXXXXXX" required>
+                                </div>
+                            </div>
+                            <div class="checkout-field">
+                                <span class="checkout-field-icon">📍</span>
+                                <div class="checkout-field-body">
+                                    <label for="orderAddress">Delivery Address</label>
+                                    <input type="text" id="orderAddress" placeholder="No. 42, Galle Road..." required>
+                                </div>
+                            </div>
+                            <div class="checkout-field">
+                                <span class="checkout-field-icon">🪑</span>
+                                <div class="checkout-field-body">
+                                    <label for="orderTable">Table No. <span style="opacity:0.4;font-size:0.7rem">(Dine-in)</span></label>
+                                    <input type="number" id="orderTable" min="1" placeholder="Blank = delivery">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Bill -->
+                    <div class="checkout-right-panel">
+                        <div class="checkout-section-label">🧾 Your Bill</div>
+                        <div class="bill-receipt" id="checkoutSummary"></div>
+                    </div>
+
                 </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="orderPhone" required placeholder="07XXXXXXXX">
+
+                <!-- Submit -->
+                <div class="checkout-submit-wrap">
+                    <button type="submit" class="checkout-submit-btn">
+                        <span>Place Order</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label>Table Number (For Dine-in)</label>
-                    <input type="number" id="orderTable" placeholder="Optional">
-                </div>
-                <div class="order-summary-small" id="checkoutSummary">
-                    <!-- Items list -->
-                </div>
-                <button type="submit" class="btn btn-primary btn-full">Submit Order</button>
             </form>
+
         </div>
     </div>
 
