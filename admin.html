@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOIR | Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+    <!-- Chart.js for beautiful analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">☕</span>
+                <div class="logo-text">
+                    <span class="main">NOIR</span>
+                    <span class="sub">ADMIN</span>
+                </div>
+            </div>
+            <button class="sidebar-toggle-close" id="sidebarClose">✕</button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-tab="dashboard">
+                <span class="icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="orders">
+                <span class="icon">🛍️</span>
+                <span>Orders</span>
+                <span class="badge" id="orderBadge">0</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="menu">
+                <span class="icon">📜</span>
+                <span>Menu Items</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="messages">
+                <span class="icon">📧</span>
+                <span>Messages</span>
+                <span class="badge" id="messageBadge">0</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="gallery">
+                <span class="icon">🖼️</span>
+                <span>Gallery</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="settings">
+                <span class="icon">⚙️</span>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="https://kaveeshaabhiman.github.io/Coffee-Shop/" class="nav-item logout" target="_blank">
+                <span class="icon">🏠</span>
+                <span>View Live Site</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="sidebar-toggle-open" id="sidebarOpen">☰</button>
+                <h1 id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="admin-profile">
+                    <div class="profile-info">
+                        <span class="name">Admin User</span>
+                        <span class="role">Store Manager</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80" alt="Admin"
+                        class="avatar">
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Sections -->
+        <div class="content-body">
+
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-pane active">
+                <div class="dashboard-stats">
+                    <div class="stat-card card">
+                        <span class="icon">🛍️</span>
+                        <div class="info">
+                            <span class="label">Total Orders</span>
+                            <span class="value" id="statOrders">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <span class="icon">💰</span>
+                        <div class="info">
+                            <span class="label">Revenue</span>
+                            <span class="value" id="statRevenue">Rs. 0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <span class="icon">👥</span>
+                        <div class="info">
+                            <span class="label">Total Customers</span>
+                            <span class="value" id="statCustomers">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card card">
+                        <span class="icon">📧</span>
+                        <div class="info">
+                            <span class="label">Messages</span>
+                            <span class="value" id="statMessages">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container card">
+                        <h3>Sales Overview</h3>
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div class="chart-container card">
+                        <h3>Popular Items</h3>
+                        <canvas id="itemsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders Management Tab -->
+            <section id="orders" class="tab-pane">
+                <div class="table-container card">
+                    <div class="table-header">
+                        <h2>Recent Orders</h2>
+                        <button class="btn btn-ghost" onclick="clearAllOrders()">Clear All</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Menu Management Tab -->
+            <section id="menu" class="tab-pane">
+                <div class="table-container card">
+                    <div class="table-header">
+                        <h2>Manage Menu Items</h2>
+                        <button class="btn btn-primary" id="addMenuItemBtn">+ Add New Item</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="menuTableBody">
+                            <!-- Items will be loaded by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Messages Tab -->
+            <section id="messages" class="tab-pane">
+                <div class="messages-list card">
+                    <div class="table-header">
+                        <h2>Client Inquiries</h2>
+                    </div>
+                    <div id="messagesContainer">
+                        <!-- Messages will be loaded by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gallery Tab -->
+            <section id="gallery" class="tab-pane">
+                <div class="table-container card">
+                    <div class="table-header">
+                        <h2>Manage Gallery</h2>
+                        <button class="btn btn-primary" id="addGalleryItemBtn">+ Add Photo</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Title</th>
+                                <th>Tag</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="galleryTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="settings" class="tab-pane">
+                <div class="settings-grid">
+                    <div class="card settings-card">
+                        <h3>Store Configuration</h3>
+                        <form id="settingsForm" class="admin-form">
+                            <div class="form-group">
+                                <label>Store Name</label>
+                                <input type="text" id="settingStoreName" value="NOIR Coffee Experience">
+                            </div>
+                            <div class="form-group">
+                                <label>Store Address</label>
+                                <input type="text" id="settingStoreAddress" value="42 Galle Road, Colombo 03">
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Phone</label>
+                                <input type="text" id="settingStorePhone" value="+94 77 123 4567">
+                            </div>
+                            <div class="form-group">
+                                <label>Store Hours (Mon-Fri)</label>
+                                <input type="text" id="settingHoursWeek" value="7:00 AM – 10:00 PM">
+                            </div>
+                            <div class="form-group">
+                                <label>Store Hours (Sat-Sun)</label>
+                                <input type="text" id="settingHoursWeekend" value="8:00 AM – 11:00 PM">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Store Settings</button>
+                        </form>
+                    </div>
+
+                    <div class="card settings-card">
+                        <h3>Home Page Visuals</h3>
+                        <form id="visualSettingsForm" class="admin-form">
+                            <div class="form-group">
+                                <label>Hero Background Image URL</label>
+                                <input type="url" id="settingHeroImg" placeholder="https://images.unsplash.com/...">
+                                <small>Full widescreen background of the entrance.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>About - Primary Image URL</label>
+                                <input type="url" id="settingAboutImg1" placeholder="https://images.unsplash.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>About - Secondary Image URL</label>
+                                <input type="url" id="settingAboutImg2" placeholder="https://images.unsplash.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>About - Accent Image URL</label>
+                                <input type="url" id="settingAboutImg3" placeholder="https://images.unsplash.com/...">
+                                <small>Fills the gap on the upper-left of the Story section.</small>
+                            </div>
+                            <div class="form-group"
+                                style="border-left: 3px solid var(--accent); padding-left: 15px; margin: 15px 0;">
+                                <label>Our Story - Overall Background Image</label>
+                                <input type="url" id="settingAboutBg" placeholder="https://images.unsplash.com/...">
+                                <small>Subtle artistic background for the entire Story section.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Award/Card Image URL</label>
+                                <input type="url" id="settingAwardImg" placeholder="https://images.unsplash.com/...">
+                                <small>Appears in the floating "Best Coffee Shop" card.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Testimonial Avatars (1, 2, 3)</label>
+                                <div style="display:flex;gap:10px;">
+                                    <input type="url" id="settingAvatar1" placeholder="User 1">
+                                    <input type="url" id="settingAvatar2" placeholder="User 2">
+                                    <input type="url" id="settingAvatar3" placeholder="User 3">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>CTA (Limited Time) Background Image URL</label>
+                                <input type="url" id="settingCtaImg" placeholder="https://images.unsplash.com/...">
+                                <small>Full width background for the limited time offer section.</small>
+                            </div>
+                            <div class="form-divider"
+                                style="margin: 20px 0; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                                <h4 style="margin-bottom:10px; color:var(--accent);">Section Backgrounds (Creative
+                                    Layer)</h4>
+                                <small>These images appear as subtle artistic backgrounds behind each section.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Our Process - Background Image URL</label>
+                                <input type="url" id="settingProcessBg" placeholder="https://images.unsplash.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>Our Menu - Background Image URL</label>
+                                <input type="url" id="settingMenuBg" placeholder="https://images.unsplash.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>Gallery - Background Image URL</label>
+                                <input type="url" id="settingGalleryBg" placeholder="https://images.unsplash.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>Testimonials - Background Image URL</label>
+                                <input type="url" id="settingTestimonialBg"
+                                    placeholder="https://images.unsplash.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>Contact - Background Image URL</label>
+                                <input type="url" id="settingContactBg" placeholder="https://images.unsplash.com/...">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Visual Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Gallery Modal -->
+    <div class="modal" id="galleryModal">
+        <div class="modal-content card">
+            <div class="modal-header">
+                <h3 id="galleryModalTitle">Add Gallery Photo</h3>
+                <button class="modal-close gallery-modal-close">✕</button>
+            </div>
+            <form id="galleryForm" class="admin-form">
+                <input type="hidden" id="galleryItemIndex">
+                <div class="form-group">
+                    <label>Photo Title</label>
+                    <input type="text" id="galleryItemTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" id="galleryItemUrl" required placeholder="https://images.unsplash.com/...">
+                </div>
+                <div class="form-group">
+                    <label>Tag (Optional - e.g. Featured, New)</label>
+                    <input type="text" id="galleryItemTag" placeholder="Featured">
+                </div>
+                <div class="form-group">
+                    <label>Layout Size</label>
+                    <select id="galleryItemSize">
+                        <option value="normal">Normal</option>
+                        <option value="large">Large (Wide)</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost gallery-modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Photo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="modal" id="menuModal">
+        <div class="modal-content card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Menu Item</h3>
+                <button class="modal-close">✕</button>
+            </div>
+            <form id="menuForm" class="admin-form">
+                <input type="hidden" id="itemIndex">
+                <input type="hidden" id="itemCategoryOrigin">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="itemCategory">
+                            <option value="hot">Hot Coffee</option>
+                            <option value="cold">Cold Coffee</option>
+                            <option value="special">Specials</option>
+                            <option value="food">Bakery & Food</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (e.g. Rs. 500)</label>
+                        <input type="text" id="itemPrice" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Image URL (from Unsplash etc.)</label>
+                    <input type="url" id="itemImageUrl" placeholder="https://images.unsplash.com/...">
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Icon/Emoji</label>
+                        <input type="text" id="itemEmoji" placeholder="☕">
+                    </div>
+                    <div class="form-group">
+                        <label>Tag (Optional)</label>
+                        <input type="text" id="itemTag" placeholder="New, Popular, etc.">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="itemDesc" rows="3" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveMenuBtn">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+
+</html>
