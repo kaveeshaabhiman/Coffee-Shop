@@ -3,16 +3,27 @@
  * Handles Menu, Orders, Messages, Gallery, and Settings management
  */
 
-// ===== ADMIN PASSWORD GATE =====
+// ===== MULTI-ADMIN AUTH SYSTEM =====
 (function () {
-    const ADMIN_PASSWORD = 'K.Abhiman123';
     const SESSION_KEY = 'noir_admin_auth';
+    const MASTER_ADMIN_DEFAULT = { name: 'Super Admin', email: 'kaveeshaabhiman12345@gmail.com', password: 'K.Abhiman123' };
+
+    const getSuperAdmin = () => {
+        return JSON.parse(localStorage.getItem('noir_super_admin')) || MASTER_ADMIN_DEFAULT;
+    };
 
     const loginScreen = document.getElementById('loginScreen');
     const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('adminEmailInput');
     const pwInput = document.getElementById('adminPasswordInput');
     const loginError = document.getElementById('loginError');
     const togglePw = document.getElementById('togglePw');
+
+    // Load available admins
+    const getAdmins = () => {
+        const stored = JSON.parse(localStorage.getItem('noir_admins')) || [];
+        return [getSuperAdmin(), ...stored];
+    };
 
     // Check if already authenticated this session
     if (sessionStorage.getItem(SESSION_KEY) === 'true') {
@@ -20,33 +31,38 @@
         setTimeout(() => loginScreen.remove(), 700);
     }
 
-    // Password toggle (show/hide)
+    // Password toggle
     togglePw.addEventListener('click', () => {
-        if (pwInput.type === 'password') {
-            pwInput.type = 'text';
-            togglePw.textContent = '🙈';
-        } else {
-            pwInput.type = 'password';
-            togglePw.textContent = '👁';
-        }
+        pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+        togglePw.textContent = pwInput.type === 'password' ? '👁' : '🙈';
     });
 
     // Login form submit
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const entered = pwInput.value;
+        const email = emailInput.value.toLowerCase();
+        const pass = pwInput.value;
+        const allAdmins = getAdmins();
 
-        if (entered === ADMIN_PASSWORD) {
-            // ✅ Correct — grant access
+        const user = allAdmins.find(a => a.email.toLowerCase() === email && a.password === pass);
+
+        if (user) {
+            if (user.status === 'blocked') {
+                loginError.textContent = '❌ This account has been blocked. Contact Super Admin.';
+                loginError.style.display = 'block';
+                return;
+            }
             sessionStorage.setItem(SESSION_KEY, 'true');
+            sessionStorage.setItem('noir_active_user', JSON.stringify({ name: user.name, email: user.email }));
             loginError.style.display = 'none';
             loginScreen.classList.add('hidden');
-            setTimeout(() => loginScreen.remove(), 700);
+            setTimeout(() => {
+                loginScreen.remove();
+                location.reload(); // Apply restricted views
+            }, 700);
         } else {
-            // ❌ Wrong — show error + shake
+            loginError.textContent = '❌ Invalid email or password.';
             loginError.style.display = 'block';
-            loginError.style.animation = 'none';
-            void loginError.offsetWidth; // trigger reflow
             loginError.style.animation = 'shake 0.4s ease';
             pwInput.value = '';
             pwInput.focus();
@@ -105,7 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
         menuBg: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1920&q=80',
         galleryBg: 'https://images.unsplash.com/photo-1507133750040-4a8f9489d35f?w=1920&q=80',
         testimonialBg: 'https://images.unsplash.com/photo-1511920170033-f83969a4c34b?w=1920&q=80',
-        contactBg: 'https://images.unsplash.com/photo-1521017432531-fbd92d744264?w=1920&q=80'
+        contactBg: 'https://images.unsplash.com/photo-1521017432531-fbd92d744264?w=1920&q=80',
+        paymentAccount: 'BOC - 123456789 - Kegalle'
     };
 
     // --- State Management ---
@@ -114,6 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
         orders: JSON.parse(localStorage.getItem('noir_orders')) || [],
         messages: JSON.parse(localStorage.getItem('noir_messages')) || [],
         gallery: JSON.parse(localStorage.getItem('noir_gallery')) || defaultGallery,
+        superAdmin: JSON.parse(localStorage.getItem('noir_super_admin')) || { name: 'Super Admin', email: 'kaveeshaabhiman12345@gmail.com', password: 'K.Abhiman123' },
+        admins: JSON.parse(localStorage.getItem('noir_admins')) || [],
         settings: { ...defaultSettings, ...(JSON.parse(localStorage.getItem('noir_settings')) || {}) }
     };
 
@@ -121,6 +140,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!localStorage.getItem('noir_gallery')) localStorage.setItem('noir_gallery', JSON.stringify(defaultGallery));
     if (!localStorage.getItem('noir_settings')) localStorage.setItem('noir_settings', JSON.stringify(defaultSettings));
     if (!localStorage.getItem('noir_menu')) localStorage.setItem('noir_menu', JSON.stringify(defaultMenu));
+
+    const activeUser = JSON.parse(sessionStorage.getItem('noir_active_user'));
+    const isSuperAdmin = activeUser && activeUser.email.toLowerCase() === 'kaveeshaabhiman12345@gmail.com';
+
+    function applyRoleRestrictions() {
+        // Hide/Show Super Admin only setting field (Legacy id removed from HTML)
+        const superField = document.getElementById('superAdminOnlyField');
+        if (superField) {
+            superField.style.display = isSuperAdmin ? 'block' : 'none';
+        }
+
+        // Hide "Admins" tab from other admins
+        const adminsTab = document.querySelector('.nav-item[data-tab="admins"]');
+        if (adminsTab && !isSuperAdmin) {
+            adminsTab.style.display = 'none';
+        }
+
+        // Hide "Payments" tab from other admins
+        const paymentsTab = document.getElementById('navPayments');
+        if (paymentsTab && !isSuperAdmin) {
+            paymentsTab.style.display = 'none';
+        }
+    }
+
+    // Call it immediately
+    applyRoleRestrictions();
 
     // --- DOM Elements ---
     const sidebar = document.getElementById('sidebar');
@@ -141,6 +186,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Elements
     const menuModal = document.getElementById('menuModal');
     const galleryModal = document.getElementById('galleryModal');
+    const orderDetailsModal = document.getElementById('orderDetailsModal');
+    const adminModal = document.getElementById('adminModal');
+    const adminsTableBody = document.getElementById('adminsTableBody');
 
     // --- Tab Switching ---
     navItems.forEach(item => {
@@ -159,7 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabId === 'menu') renderMenuTable();
             if (tabId === 'gallery') renderGalleryTable();
             if (tabId === 'messages') renderMessages();
+            if (tabId === 'admins') renderAdminsTable();
             if (tabId === 'settings') loadSettings();
+            if (tabId === 'payments') loadSettings();
         });
     });
 
@@ -315,7 +365,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('settingDeliveryZone1')) document.getElementById('settingDeliveryZone1').value = s.deliveryZone1 ?? 250;
         if (document.getElementById('settingDeliveryZone2')) document.getElementById('settingDeliveryZone2').value = s.deliveryZone2 ?? 500;
         if (document.getElementById('settingDeliveryZone3')) document.getElementById('settingDeliveryZone3').value = s.deliveryZone3 ?? 1000;
-
+        
+        // Online Payment Tab fields
+        if (document.getElementById('settingBankName')) {
+            const parts = (s.paymentAccount || '').split(' - ');
+            document.getElementById('settingBankName').value = parts[0] || '';
+            document.getElementById('settingAccountNo').value = parts[1] || '';
+            document.getElementById('settingBranch').value = parts[2] || '';
+            updateAccountPreview();
+        }
         // Visual Settings
         if (document.getElementById('settingHeroImg')) document.getElementById('settingHeroImg').value = s.heroImg || '';
         if (document.getElementById('settingAboutImg1')) document.getElementById('settingAboutImg1').value = s.aboutImg1 || '';
@@ -334,6 +392,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('settingContactBg')) document.getElementById('settingContactBg').value = s.contactBg || '';
     }
 
+    // --- Real-time Account Preview logic ---
+    function updateAccountPreview() {
+        const bankInput = document.getElementById('settingBankName');
+        const accInput = document.getElementById('settingAccountNo');
+        const branchInput = document.getElementById('settingBranch');
+
+        if (document.getElementById('previewBank') && bankInput) {
+            document.getElementById('previewBank').textContent = bankInput.value || 'BANK NAME';
+            document.getElementById('previewAcc').textContent = accInput.value || '•••• •••• ••••';
+            document.getElementById('previewBranch').textContent = branchInput.value || 'CITY NAME';
+        }
+    }
+
+    ['settingBankName', 'settingAccountNo', 'settingBranch'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateAccountPreview);
+    });
+
     document.getElementById('settingsForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
         state.settings = {
@@ -348,7 +423,21 @@ document.addEventListener('DOMContentLoaded', () => {
             deliveryZone3: parseInt(document.getElementById('settingDeliveryZone3').value) || 1000
         };
         localStorage.setItem('noir_settings', JSON.stringify(state.settings));
-        alert(`Delivery zones saved!\nZone 1 (0-50km): Rs.${state.settings.deliveryZone1}\nZone 2 (50-100km): Rs.${state.settings.deliveryZone2}\nZone 3 (100km+): Rs.${state.settings.deliveryZone3}`);
+        alert(`Store settings saved!`);
+    });
+
+    document.getElementById('paymentSettingsForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const b = document.getElementById('settingBankName').value;
+        const a = document.getElementById('settingAccountNo').value;
+        const br = document.getElementById('settingBranch').value;
+        
+        state.settings = {
+            ...state.settings,
+            paymentAccount: `${b} - ${a} - ${br}`
+        };
+        localStorage.setItem('noir_settings', JSON.stringify(state.settings));
+        alert('Vault Secured: Payment Details Updated!');
     });
 
     document.getElementById('visualSettingsForm')?.addEventListener('submit', (e) => {
@@ -395,19 +484,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 }<br>
                 ${o.distance ? `<small style="color:#aaa">📶 ${o.distance} km away</small><br>` : ''}
             </td>
-            <td>${o.items.map(i => `${i.quantity || 1}x ${i.name}`).join(', ')}</td>
+            <td>
+                <ul style="padding-left:0; margin:0;">
+                    ${o.items.map(i => `<li class="item-li"><strong>${i.quantity || 1}x</strong> ${i.name}</li>`).join('')}
+                </ul>
+            </td>
             <td>
                 <span style="color:#888;font-size:0.78rem">Subtotal: ${o.subtotal || o.total}</span><br>
                 ${o.orderType === 'pickup'
                     ? `<span style="color:#2ecc71;font-size:0.78rem">🏪 Pickup: Free</span>`
                     : `<span style="color:#e67e22;font-size:0.78rem">🚚 Delivery: ${o.deliveryCharge || 'Rs. 0'}</span>`
                 }<br>
-                <strong style="color:#c8a97e">Total: ${o.total}</strong>
+                <strong style="color:#c8a97e">Total: ${o.total}</strong><br>
+                <small style="color:var(--accent); font-weight:600">💳 ${o.paymentMethod === 'online' ? 'Online Payment' : (o.orderType === 'pickup' ? 'Pay at Shop' : 'Cash on Delivery')}</small>
             </td>
             <td><span class="status ${o.status}">${o.status}</span></td>
             <td>
-                ${o.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="confirmOrder('${o.id}')">Confirm</button>` : '✓'}
-                <button class="btn btn-ghost btn-sm" onclick="deleteOrder('${o.id}')" style="color:#ec7063">✕</button>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <button class="btn btn-primary btn-sm" onclick="viewOrderInvoice('${o.id}')">View</button>
+                    ${o.status === 'pending' ? `<button class="btn btn-ghost btn-sm" onclick="confirmOrder('${o.id}')" style="border-color:#2ecc71; color:#2ecc71">Confirm</button>` : ''}
+                    <button class="btn btn-ghost btn-sm" onclick="deleteOrder('${o.id}')" style="color:#ec7063">✕</button>
+                </div>
             </td>
         </tr>`).join('') || '<tr><td colspan="6" align="center">No orders.</td></tr>';
         updateDashboardStats();
@@ -424,6 +521,178 @@ document.addEventListener('DOMContentLoaded', () => {
             let os = JSON.parse(localStorage.getItem('noir_orders')) || [];
             localStorage.setItem('noir_orders', JSON.stringify(os.filter(ord => ord.id !== id)));
             renderOrdersTable();
+        }
+    };
+
+    window.viewOrderInvoice = function (id) {
+        const o = state.orders.find(ord => ord.id === id);
+        if (!o) return;
+
+        const content = document.getElementById('orderDetailsContent');
+        const modal = document.getElementById('orderDetailsModal');
+
+        const payLabel = o.paymentMethod === 'online' ? 'Online Payment' : (o.orderType === 'pickup' ? 'Pay at Shop' : 'Cash on Delivery');
+
+        content.innerHTML = `
+            <div class="invoice-section">
+                <span class="invoice-label">Order ID & Date</span>
+                <div class="invoice-value">${o.id} &middot; ${o.date}</div>
+            </div>
+            <div class="invoice-section">
+                <span class="invoice-label">Customer Information</span>
+                <div class="invoice-value">${o.customerName}</div>
+                <div class="invoice-value" style="font-size:0.8rem; opacity:0.8;">📞 ${o.phone}</div>
+                <div class="invoice-value" style="font-size:0.8rem; opacity:0.8; margin-top:4px;">📍 ${o.address}</div>
+                ${o.distance ? `<div class="invoice-value" style="font-size:0.75rem; color:var(--accent);">📶 ${o.distance} away from store</div>` : ''}
+            </div>
+            <div class="invoice-section">
+                <span class="invoice-label">Items Ordered</span>
+                <div class="invoice-items-list">
+                    ${o.items.map(i => `
+                        <div class="invoice-item">
+                            <span class="name">${i.quantity || 1}x ${i.name}</span>
+                            <span class="price">${i.price}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="invoice-section" style="background:rgba(200,169,126,0.03); padding:10px; border-radius:8px;">
+                <span class="invoice-label">Billing & Payment</span>
+                <div class="invoice-item">
+                    <span>Subtotal</span>
+                    <span>${o.subtotal || o.total}</span>
+                </div>
+                <div class="invoice-item">
+                    <span>${o.orderType === 'pickup' ? '🏪 Pickup' : '🚚 Delivery'}</span>
+                    <span>${o.deliveryCharge || 'Free'}</span>
+                </div>
+                <div class="invoice-total-row">
+                    <span>GRAND TOTAL</span>
+                    <span>${o.total}</span>
+                </div>
+                <div style="margin-top:10px; font-size:0.75rem; text-align:right; color:var(--accent);">
+                    <strong>Payment:</strong> ${payLabel}
+                </div>
+            </div>
+        `;
+
+        modal.classList.add('active');
+    };
+
+    // --- Admin/Staff Logic ---
+    function renderAdminsTable() {
+        if (!adminsTableBody) return;
+        
+        // Render Super Admin row first (un-deletable, un-blockable)
+        let html = `
+            <tr style="background:rgba(200,169,126,0.05); border-left:4px solid var(--accent);">
+                <td><strong>${state.superAdmin.name}</strong> <small style="display:block;color:var(--accent);font-size:0.7rem;">(System Owner)</small></td>
+                <td>${state.superAdmin.email}</td>
+                <td><code style="background:rgba(200,169,126,0.1); padding:2px 6px; border-radius:4px; font-size:0.75rem;">••••••••</code></td>
+                <td><span class="status active">Active</span></td>
+                <td>
+                    <button class="btn btn-ghost btn-sm" onclick="editSuperAdmin()">Edit</button>
+                </td>
+            </tr>
+        `;
+
+        // Render other staff
+        html += state.admins.map((adm, idx) => `
+            <tr>
+                <td><strong>${adm.name}</strong></td>
+                <td>${adm.email}</td>
+                <td><code style="background:rgba(200,169,126,0.1); padding:2px 6px; border-radius:4px; font-size:0.75rem;">••••••••</code></td>
+                <td>
+                    <span class="status ${adm.status || 'active'}">${adm.status || 'active'}</span>
+                </td>
+                <td>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-ghost btn-sm" onclick="editAdmin(${idx})">Edit</button>
+                        <button class="btn btn-ghost btn-sm" onclick="toggleAdminStatus(${idx})" style="color:${adm.status === 'blocked' ? '#2ecc71' : '#f1c40f'}">
+                            ${adm.status === 'blocked' ? 'Unblock' : 'Block'}
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="deleteAdmin(${idx})" style="color:#ec7063">✕</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        adminsTableBody.innerHTML = html || '<tr><td colspan="5" align="center">No extra staff members.</td></tr>';
+    }
+
+    window.editSuperAdmin = function () {
+        document.getElementById('adminModalTitle').textContent = 'Edit System Owner';
+        document.getElementById('staffName').value = state.superAdmin.name;
+        document.getElementById('staffEmail').value = state.superAdmin.email;
+        document.getElementById('staffPassword').value = state.superAdmin.password;
+        document.getElementById('adminIndex').value = 'SUPER';
+        adminModal.classList.add('active');
+    };
+
+    window.toggleAdminStatus = function (idx) {
+        state.admins[idx].status = state.admins[idx].status === 'blocked' ? 'active' : 'blocked';
+        localStorage.setItem('noir_admins', JSON.stringify(state.admins));
+        renderAdminsTable();
+    };
+
+    document.getElementById('addAdminBtn')?.addEventListener('click', () => {
+        document.getElementById('adminModalTitle').textContent = 'Add Staff Member';
+        document.getElementById('adminForm').reset();
+        document.getElementById('adminIndex').value = '';
+        adminModal.classList.add('active');
+    });
+
+    window.editAdmin = function (idx) {
+        const adm = state.admins[idx];
+        document.getElementById('adminModalTitle').textContent = 'Edit Member';
+        document.getElementById('staffName').value = adm.name;
+        document.getElementById('staffEmail').value = adm.email;
+        document.getElementById('staffPassword').value = adm.password;
+        document.getElementById('adminIndex').value = idx;
+        adminModal.classList.add('active');
+    };
+
+    document.getElementById('adminForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const idx = document.getElementById('adminIndex').value;
+        const newDetails = {
+            name: document.getElementById('staffName').value,
+            email: document.getElementById('staffEmail').value,
+            password: document.getElementById('staffPassword').value,
+            status: (idx !== '' && idx !== 'SUPER') ? state.admins[idx].status : 'active'
+        };
+
+        if (idx === 'SUPER') {
+            state.superAdmin = newDetails;
+            localStorage.setItem('noir_super_admin', JSON.stringify(newDetails));
+            // Force logout if super admin email/pass changed for security? 
+            // For now just update profile.
+            loadActiveUser();
+        } else if (idx !== '') {
+            state.admins[idx] = newDetails;
+            localStorage.setItem('noir_admins', JSON.stringify(state.admins));
+        } else {
+            state.admins.push(newDetails);
+            localStorage.setItem('noir_admins', JSON.stringify(state.admins));
+        }
+
+        renderAdminsTable();
+        adminModal.classList.remove('active');
+    });
+
+    window.deleteAdmin = function (idx) {
+        const adm = state.admins[idx];
+        const active = JSON.parse(sessionStorage.getItem('noir_active_user'));
+        
+        if (active && active.email === adm.email) {
+            alert("You cannot delete the account you are currently logged into.");
+            return;
+        }
+
+        if (confirm('Remove this staff member?')) {
+            state.admins.splice(idx, 1);
+            localStorage.setItem('noir_admins', JSON.stringify(state.admins));
+            renderAdminsTable();
         }
     };
 
@@ -455,24 +724,121 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateDashboardStats() {
         const os = JSON.parse(localStorage.getItem('noir_orders')) || [];
         const ms = JSON.parse(localStorage.getItem('noir_messages')) || [];
+        
+        // 1. Core Stats
         const rev = os.reduce((a, b) => a + (parseInt(b.total.replace('Rs. ', '')) || 0), 0);
         if (document.getElementById('statOrders')) document.getElementById('statOrders').textContent = os.length;
         if (document.getElementById('statRevenue')) document.getElementById('statRevenue').textContent = 'Rs. ' + rev;
         if (document.getElementById('statMessages')) document.getElementById('statMessages').textContent = ms.length;
         if (document.getElementById('statCustomers')) document.getElementById('statCustomers').textContent = new Set(os.map(o => o.phone)).size;
+
+        renderSalesOverview(os);
+        renderPopularItems(os);
+    }
+
+    function renderSalesOverview(orders) {
+        const container = document.getElementById('salesChartContainer');
+        if (!container) return;
+
+        // Group last 7 days
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push({
+                dateStr: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                short: d.toLocaleDateString(undefined, { weekday: 'short' }).charAt(0),
+                total: 0
+            });
+        }
+
+        orders.forEach(o => {
+            // Assume o.date is something like "Mar 11, 2026, 11:30 PM"
+            const orderDate = new Date(o.date);
+            const key = orderDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const dayObj = days.find(d => d.dateStr === key);
+            if (dayObj) {
+                dayObj.total += (parseInt(o.total.replace('Rs. ', '')) || 0);
+            }
+        });
+
+        const maxTotal = Math.max(...days.map(d => d.total), 100);
+
+        container.innerHTML = days.map(d => `
+            <div class="chart-bar-wrap">
+                <div class="chart-bar" style="height: ${(d.total / maxTotal) * 100}%" data-value="Rs. ${d.total}"></div>
+                <span class="chart-label">${d.short}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderPopularItems(orders) {
+        const container = document.getElementById('popularItemsList');
+        if (!container) return;
+
+        const itemsCount = {};
+        orders.forEach(o => {
+            o.items.forEach(i => {
+                itemsCount[i.name] = (itemsCount[i.name] || 0) + (i.quantity || 1);
+            });
+        });
+
+        const sorted = Object.entries(itemsCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
+
+        container.innerHTML = sorted.map(([name, count]) => `
+            <div class="popular-item">
+                <div class="popular-item-info">
+                    <span class="popular-item-name">${name}</span>
+                    <span class="popular-item-count">${count} sold</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: ${(count / maxCount) * 100}%"></div>
+                </div>
+            </div>
+        `).join('') || '<div align="center" style="color:var(--text-muted); padding-top:20px;">No sales data yet</div>';
     }
 
     // Modal Close logic
     document.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', () => {
         menuModal.classList.remove('active');
         galleryModal.classList.remove('active');
+        orderDetailsModal.classList.remove('active');
+        adminModal.classList.remove('active');
     }));
 
+    function loadActiveUser() {
+        const superDefault = { name: 'Super Admin', email: 'kaveeshaabhiman12345@gmail.com' };
+        const savedSuper = JSON.parse(localStorage.getItem('noir_super_admin')) || superDefault;
+        const user = JSON.parse(sessionStorage.getItem('noir_active_user')) || savedSuper;
+
+        if (document.getElementById('activeUserName')) document.getElementById('activeUserName').textContent = user.name;
+        if (document.getElementById('activeUserAvatar')) {
+            document.getElementById('activeUserAvatar').textContent = (user.email || 'A').charAt(0).toUpperCase();
+        }
+        
+        const isSuper = user.email === savedSuper.email;
+        if (document.getElementById('activeUserRole')) {
+            document.getElementById('activeUserRole').textContent = isSuper ? 'System Owner' : 'Staff Member';
+        }
+
+        // HIDDEN: Non-super admins cannot see "Manage Staff" tab
+        const adminNavLink = document.querySelector('.nav-item[data-tab="admins"]');
+        if (adminNavLink) {
+            adminNavLink.style.display = isSuper ? 'flex' : 'none';
+        }
+    }
+
     // Init
+    loadActiveUser();
     updateDashboardStats();
     renderMenuTable();
     renderOrdersTable();
     renderMessages();
     renderGalleryTable();
+    renderAdminsTable();
     loadSettings();
 });

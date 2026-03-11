@@ -32,19 +32,29 @@
             <p class="login-subtitle">Enter your admin password to continue</p>
             <form id="loginForm" class="login-form">
                 <div class="login-input-wrap">
+                    <span class="login-input-icon">📧</span>
+                    <input 
+                        type="email" 
+                        id="adminEmailInput" 
+                        class="login-input" 
+                        placeholder="Admin Email..." 
+                        required
+                    >
+                </div>
+                <div class="login-input-wrap">
                     <span class="login-input-icon">🔐</span>
                     <input 
                         type="password" 
                         id="adminPasswordInput" 
                         class="login-input" 
-                        placeholder="Enter password..." 
+                        placeholder="Password..." 
                         autocomplete="current-password"
-                        autofocus
+                        required
                     >
                     <button type="button" id="togglePw" class="login-eye">👁</button>
                 </div>
                 <div id="loginError" class="login-error" style="display:none;">
-                    ❌ Incorrect password. Please try again.
+                    ❌ Invalid email or password.
                 </div>
                 <button type="submit" class="login-btn">
                     <span>Login to Dashboard</span>
@@ -91,9 +101,17 @@
                 <span class="icon">🖼️</span>
                 <span>Gallery</span>
             </a>
+            <a href="#" class="nav-item" data-tab="payments" id="navPayments">
+                <span class="icon">💳</span>
+                <span>Online Payments</span>
+            </a>
             <a href="#" class="nav-item" data-tab="settings">
                 <span class="icon">⚙️</span>
                 <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="admins">
+                <span class="icon">👥</span>
+                <span>Manage Staff</span>
             </a>
         </nav>
 
@@ -116,11 +134,10 @@
             <div class="header-right">
                 <div class="admin-profile">
                     <div class="profile-info">
-                        <span class="name">Admin User</span>
-                        <span class="role">Store Manager</span>
+                        <span class="name" id="activeUserName">Admin User</span>
+                        <span class="role" id="activeUserRole">Store Manager</span>
                     </div>
-                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80" alt="Admin"
-                        class="avatar">
+                    <div id="activeUserAvatar" class="avatar">?</div>
                 </div>
             </div>
         </header>
@@ -163,12 +180,22 @@
 
                 <div class="dashboard-charts">
                     <div class="chart-container card">
-                        <h3>Sales Overview</h3>
-                        <canvas id="salesChart"></canvas>
+                        <div class="chart-header">
+                            <h3>Sales Overview</h3>
+                            <span class="chart-subtitle">Last 7 Days</span>
+                        </div>
+                        <div id="salesChartContainer" class="custom-chart">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                     <div class="chart-container card">
-                        <h3>Popular Items</h3>
-                        <canvas id="itemsChart"></canvas>
+                        <div class="chart-header">
+                            <h3>Popular Items</h3>
+                            <span class="chart-subtitle">Most Ordered</span>
+                        </div>
+                        <div id="popularItemsList" class="popular-list">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                 </div>
             </section>
@@ -257,6 +284,29 @@
                 </div>
             </section>
 
+            <!-- Staff/Admin Management Tab -->
+            <section id="admins" class="tab-pane">
+                <div class="table-container card">
+                    <div class="table-header">
+                        <h2>Staff & Admin Personnel</h2>
+                        <button class="btn btn-primary" id="addAdminBtn">+ Add Staff Member</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Password</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminsTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <!-- Settings Tab -->
             <section id="settings" class="tab-pane">
                 <div class="settings-grid">
@@ -306,6 +356,7 @@
                             <button type="submit" class="btn btn-primary">Save Store Settings</button>
                         </form>
                     </div>
+                        </div>
 
                     <div class="card settings-card">
                         <h3>Home Page Visuals</h3>
@@ -380,6 +431,74 @@
                                 <input type="url" id="settingContactBg" placeholder="https://images.unsplash.com/...">
                             </div>
                             <button type="submit" class="btn btn-primary">Save Visual Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Online Payments Tab (Super Admin Only) -->
+            <section class="tab-pane" id="payments">
+                <div class="card settings-card" style="max-width: 800px; margin: 0 auto;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                        <div style="font-size: 2.5rem;">💳</div>
+                        <div>
+                            <h3 style="margin: 0;">Online Payment Configuration</h3>
+                            <p style="color: #888; font-size: 0.85rem; margin: 5px 0 0 0;">
+                                Securely manage your merchant bank details.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(231, 76, 60, 0.1); border-left: 4px solid #e74c3c; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                        <p style="color: #e74c3c; font-size: 0.88rem; margin: 0; font-weight: 600;">
+                            ⚠️ Restricted Access
+                        </p>
+                        <p style="color: #aaa; font-size: 0.82rem; margin: 5px 0 0 0;">
+                            This section is encrypted and only accessible by the Super Admin. Changes here will immediately affect where customer payments are recorded.
+                        </p>
+                    </div>
+
+                    <div class="payment-config-wrapper">
+                        <form id="paymentSettingsForm" class="admin-form">
+                            <div class="account-details-grid">
+                                <div class="form-group">
+                                    <label>🏦 Bank Name</label>
+                                    <input type="text" id="settingBankName" placeholder="Ex: Bank of Ceylon">
+                                </div>
+                                <div class="form-group">
+                                    <label>🔢 Account Number</label>
+                                    <input type="text" id="settingAccountNo" placeholder="Ex: 123456789">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>📍 Branch / Location</label>
+                                    <input type="text" id="settingBranch" placeholder="Ex: Kegalle Main Branch">
+                                </div>
+                            </div>
+
+                            <div class="secure-info-divider">
+                                <span>Preview Account Data</span>
+                            </div>
+
+                            <!-- Creative Account Card Preview -->
+                            <div class="account-card-preview">
+                                <div class="card-chip"></div>
+                                <div class="card-bank-name" id="previewBank">BANK NAME</div>
+                                <div class="card-acc-label">ACCOUNT NUMBER</div>
+                                <div class="card-acc-no" id="previewAcc">•••• •••• ••••</div>
+                                <div class="card-footer">
+                                    <div class="card-holder">
+                                        <span>BRANCH</span>
+                                        <div id="previewBranch">CITY NAME</div>
+                                    </div>
+                                    <div class="card-shield">🛡️ SECURED</div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 30px; display: flex; justify-content: center;">
+                                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; border-radius: 12px; font-weight: 700;">
+                                    Confirm & Encrypt Account Details
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -476,6 +595,51 @@
                     <button type="submit" class="btn btn-primary" id="saveMenuBtn">Save Item</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Staff/Admin Modal -->
+    <div class="modal" id="adminModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="adminModalTitle">Add Staff Member</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="adminForm" class="admin-form">
+                <input type="hidden" id="adminIndex">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="staffName" required placeholder="Ex: John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="staffEmail" required placeholder="staff@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Login Password</label>
+                    <input type="text" id="staffPassword" required placeholder="Enter password...">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost modal-close">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderDetailsModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Order Invoice</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="orderDetailsContent" class="invoice-container">
+                <!-- Content injected by JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary modal-close" style="width: 100%;">Close Invoice</button>
+            </div>
         </div>
     </div>
 

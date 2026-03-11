@@ -259,17 +259,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.style.borderColor = '#2ecc71';
                 btn.style.color = '#2ecc71';
                 updateCheckoutBill('delivery');
+                validateOrderButton();
             },
             (err) => {
-                info.textContent = '❌ Location access denied. Delivery charge will be Rs. 250 (Zone 1).';
+                info.textContent = '❌ Please allow location access to calculate delivery charge.';
                 info.style.color = '#e74c3c';
                 detectedDistanceKm = null;
                 btn.textContent = '📍 Try Again';
                 btn.disabled = false;
+                validateOrderButton();
             },
             { timeout: 10000 }
         );
     };
+
+    function validateOrderButton() {
+        const type = document.getElementById('orderType').value;
+        const btn = document.getElementById('placeOrderBtn');
+        const text = document.getElementById('placeOrderText');
+        const payMethod = document.getElementById('paymentMethod').value;
+        
+        const name = document.getElementById('orderName').value;
+        const phone = document.getElementById('orderPhone').value;
+        const address = document.getElementById('orderAddress').value;
+
+        const detailsValid = name && phone && (type !== 'delivery' || (address && detectedDistanceKm !== null));
+
+        if (payMethod === 'online') {
+            // Hide place order button, show pay now in summary instead
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = 'flex';
+            if (type === 'delivery' && detectedDistanceKm === null) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                if (text) text.textContent = 'Detection Required 📍';
+            } else {
+                btn.disabled = !detailsValid;
+                btn.style.opacity = detailsValid ? '1' : '0.5';
+                if (text) text.textContent = 'Place Order';
+            }
+        }
+        
+        // Refresh summary to update Pay Now button visibility
+        updateCheckoutBill(type);
+    }
+
+    // Add listeners for live validation
+    document.getElementById('orderName')?.addEventListener('input', validateOrderButton);
+    document.getElementById('orderPhone')?.addEventListener('input', validateOrderButton);
+    document.getElementById('orderAddress')?.addEventListener('input', validateOrderButton);
 
     window.selectOrderType = function (type) {
         document.getElementById('orderType').value = type;
@@ -279,6 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const addrWrap = document.getElementById('addressFieldWrap');
         const locationWrap = document.getElementById('locationDetectWrap');
         const addrInput = document.getElementById('orderAddress');
+        
+        // Update Payment Method Labels
+        const cashLabel = document.getElementById('cashLabel');
+        const cashIcon = document.getElementById('cashIcon');
 
         if (type === 'delivery') {
             btnD.classList.add('active');
@@ -286,6 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
             addrWrap.style.display = 'flex';
             if (locationWrap) locationWrap.style.display = 'block';
             addrInput.required = true;
+            if (cashLabel) cashLabel.textContent = 'Cash on Delivery';
+            if (cashIcon) cashIcon.textContent = '💵';
         } else {
             btnP.classList.add('active');
             btnD.classList.remove('active');
@@ -294,14 +339,42 @@ document.addEventListener('DOMContentLoaded', () => {
             addrInput.required = false;
             addrInput.value = '';
             detectedDistanceKm = null;
+            if (cashLabel) cashLabel.textContent = 'Pay at Shop';
+            if (cashIcon) cashIcon.textContent = '🏪';
         }
 
         updateCheckoutBill(type);
+        validateOrderButton();
+    };
+
+    window.selectPaymentMethod = function (method) {
+        document.getElementById('paymentMethod').value = method;
+        const btnC = document.getElementById('payCash');
+        const btnO = document.getElementById('payOnline');
+
+        if (method === 'cash') {
+            btnC.classList.add('active');
+            btnO.classList.remove('active');
+        } else {
+            btnO.classList.add('active');
+            btnC.classList.remove('active');
+        }
+        validateOrderButton(); // This will refresh summary and update button visibility
+    };
+
+    window.handleOnlinePaymentButtonClick = function() {
+        // This is only called when button is visible (form valid)
+        const type = document.getElementById('orderType').value;
+        const { grandTotal } = updateCheckoutBill(type);
+        
+        document.getElementById('paymentTotalAmount').textContent = `Rs. ${grandTotal}`;
+        document.getElementById('paymentModal').classList.add('active');
     };
 
     function updateCheckoutBill(type) {
         let deliveryCharge = 0;
         let distanceLabel = '';
+        let locationRequired = false;
 
         if (type === 'delivery') {
             if (detectedDistanceKm !== null) {
@@ -309,9 +382,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const zone = detectedDistanceKm <= 50 ? 'Zone 1' : detectedDistanceKm <= 100 ? 'Zone 2' : 'Zone 3';
                 distanceLabel = `${detectedDistanceKm}km &middot; ${zone}`;
             } else {
-                const s = JSON.parse(localStorage.getItem('noir_settings')) || {};
-                deliveryCharge = parseInt(s.deliveryZone1) || 250; // default zone1
-                distanceLabel = 'Zone 1 (default)';
+                deliveryCharge = 0;
+                distanceLabel = 'Waiting for location...';
+                locationRequired = true;
             }
         }
 
@@ -325,6 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         const grandTotal = subtotal + deliveryCharge;
+        const payMethod = document.getElementById('paymentMethod').value;
+        const payLabel = payMethod === 'online' ? '💳 Online Payment' : (type === 'pickup' ? '🏪 Pay at Shop' : '💵 Cash on Delivery');
 
         document.getElementById('checkoutSummary').innerHTML =
             `<div class="bill-receipt-header">☕ NOIR COFFEE — ORDER RECEIPT</div>`
@@ -332,12 +407,31 @@ document.addEventListener('DOMContentLoaded', () => {
             + `<div class="summary-divider"></div>
             <div class="summary-item summary-subtotal"><span>Subtotal</span><span>Rs. ${subtotal}</span></div>
             ${type === 'delivery'
-                ? `<div class="summary-item summary-delivery"><span>🚚 Delivery <small style="opacity:0.6">${distanceLabel}</small></span><span>Rs. ${deliveryCharge}</span></div>`
+                ? `<div class="summary-item summary-delivery"><span>🚚 Delivery <small style="opacity:0.6">${distanceLabel}</small></span><span>${locationRequired ? '---' : 'Rs. ' + deliveryCharge}</span></div>`
                 : `<div class="summary-item" style="padding:4px 14px;opacity:0.6;font-size:0.75rem;"><span>🏪 Pickup</span><span style="color:#2ecc71;font-size:0.72rem;">Free</span></div>`
             }
-            <div class="summary-item summary-total"><span>Grand Total</span><span>Rs. ${grandTotal}</span></div>`;
+            <div class="summary-item" style="padding:4px 14px;opacity:0.6;font-size:0.75rem;"><span>Payment Method</span><span>${payLabel}</span></div>
+            <div class="summary-item summary-total"><span>Grand Total</span><span>${locationRequired ? '---' : 'Rs. ' + grandTotal}</span></div>
+            ${(payMethod === 'online' && isFormFullyValid())
+                ? `<div style="padding:10px 14px; animation: slideUp 0.3s ease;">
+                    <button type="button" class="btn btn-primary btn-full" id="onlinePayNowBtn" 
+                        onclick="handleOnlinePaymentButtonClick()" 
+                        style="background: linear-gradient(135deg, #c8a97e, #e8d5b5); color: #000; border: none; font-weight: 800; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(200,169,126,0.3); transform: scale(1.02); transition: all 0.3s;">
+                        💳 ONLINE PAY NOW
+                    </button>
+                    <p style="font-size: 0.65rem; color: #2ecc71; text-align: center; margin-top: 8px; font-weight: 600;">✨ Ready to secure your transaction</p>
+                   </div>` 
+                : (payMethod === 'online' ? `<p style="font-size: 0.65rem; color: #666; text-align: center; padding: 10px; font-style: italic;">Complete your details to enable online payment</p>` : '')}`;
 
         return { subtotal, deliveryCharge, grandTotal };
+    }
+
+    function isFormFullyValid() {
+        const name = document.getElementById('orderName').value;
+        const phone = document.getElementById('orderPhone').value;
+        const type = document.getElementById('orderType').value;
+        const address = document.getElementById('orderAddress').value;
+        return name && phone && (type !== 'delivery' || (address && detectedDistanceKm !== null));
     }
 
     // === Checkout ===
@@ -347,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Reset to delivery on each open
             selectOrderType('delivery');
             updateCheckoutBill('delivery');
+            validateOrderButton();
         });
     }
 
@@ -356,6 +451,20 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const orderType = document.getElementById('orderType').value;
         const { subtotal, deliveryCharge, grandTotal } = updateCheckoutBill(orderType);
+        const paymentMethod = document.getElementById('paymentMethod').value;
+
+        if (paymentMethod === 'online') {
+            // Open Payment Modal instead of finalizing
+            const s = JSON.parse(localStorage.getItem('noir_settings'));
+            const paymentAcc = document.getElementById('paymentStoreAccount');
+            if (paymentAcc) {
+                paymentAcc.innerHTML = `<strong>Merchant Account:</strong><br>${s?.paymentAccount || 'BOC - 123456789 - Kegalle'}`;
+            }
+            
+            document.getElementById('paymentTotalAmount').textContent = `Rs. ${grandTotal}`;
+            document.getElementById('paymentModal').classList.add('active');
+            return;
+        }
 
         const orderId = 'ORD-' + Math.floor(Math.random() * 9000 + 1000);
         const orderData = {
@@ -363,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
             customerName: document.getElementById('orderName').value,
             phone: document.getElementById('orderPhone').value,
             orderType: orderType,
+            paymentMethod: paymentMethod,
             address: orderType === 'delivery' ? document.getElementById('orderAddress').value : 'Pickup from store',
             table: orderType === 'pickup' ? 'Pickup' : 'Delivery',
             distance: detectedDistanceKm ? `${detectedDistanceKm} km` : null,
@@ -391,6 +501,128 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Order successful! Wait for confirmation.', '✅');
         checkoutForm.reset();
     });
+
+    // --- 💳 Online Card Payment Logic ---
+    const cardPaymentForm = document.getElementById('cardPaymentForm');
+    const paymentModal = document.getElementById('paymentModal');
+    const paymentClose = document.getElementById('paymentClose');
+
+    paymentClose?.addEventListener('click', () => paymentModal.classList.remove('active'));
+
+    // Live Preview Updates
+    document.getElementById('cardNumber')?.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '').substring(0, 16);
+        let formatted = val.match(/.{1,4}/g)?.join(' ') || '•••• •••• •••• ••••';
+        e.target.value = val.match(/.{1,4}/g)?.join(' ') || val;
+        document.getElementById('previewCardNumber').textContent = formatted;
+    });
+
+    document.getElementById('cardName')?.addEventListener('input', (e) => {
+        document.getElementById('previewCardName').textContent = e.target.value.toUpperCase() || 'CARD HOLDER';
+    });
+
+    document.getElementById('cardExpiry')?.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '').substring(0, 4);
+        if (val.length >= 2) val = val.substring(0, 2) + '/' + val.substring(2);
+        e.target.value = val;
+        document.getElementById('previewCardExpiry').textContent = val || 'MM/YY';
+    });
+
+    cardPaymentForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('confirmPaymentBtn');
+        const originalText = btn.innerHTML;
+        const total = document.getElementById('paymentTotalAmount').textContent;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+
+        // Simulate Bank Gateway Delay
+        setTimeout(() => {
+            finalizeOrderAfterPayment();
+            
+            // Transform Modal into Success screen
+            const modalBody = document.querySelector('.payment-modal-content');
+            if (modalBody) {
+                modalBody.innerHTML = `
+                    <div class="payment-success-screen">
+                        <div class="success-icon-wrap">
+                            <span class="success-checkmark">✓</span>
+                        </div>
+                        <h2>Payment Successful!</h2>
+                        <p>Your transaction has been securely processed and sent to the merchant account.</p>
+                        
+                        <div class="success-details">
+                            <div class="success-row"><span>Order ID</span><span id="successOrderId">---</span></div>
+                            <div class="success-row"><span>Amount Paid</span><span>${total}</span></div>
+                            <div class="success-row"><span>Status</span><span>COMPLETED</span></div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="closeSuccessAndOrders()" style="min-width: 160px;">Done</button>
+                    </div>
+                `;
+                
+                // Set the real Order ID generated in finalizeOrderAfterPayment
+                const lastOrder = JSON.parse(localStorage.getItem('noir_orders'))[0];
+                document.getElementById('successOrderId').textContent = lastOrder.id;
+            }
+
+            cardPaymentForm.reset();
+            // Reset preview
+            document.getElementById('previewCardNumber').textContent = '•••• •••• •••• ••••';
+            document.getElementById('previewCardName').textContent = 'CARD HOLDER';
+            document.getElementById('previewCardExpiry').textContent = 'MM/YY';
+        }, 2200);
+    });
+
+    window.closeSuccessAndOrders = function() {
+        const modal = document.getElementById('paymentModal');
+        modal.classList.remove('active');
+        // Restore modal structure after delay for next time
+        setTimeout(() => {
+            location.reload(); 
+        }, 500);
+    };
+
+    function finalizeOrderAfterPayment() {
+        const orderType = document.getElementById('orderType').value;
+        const { subtotal, deliveryCharge, grandTotal } = updateCheckoutBill(orderType);
+        const orderId = 'ORD-' + Math.floor(Math.random() * 9000 + 1000);
+        
+        const orderData = {
+            id: orderId,
+            customerName: document.getElementById('orderName').value,
+            phone: document.getElementById('orderPhone').value,
+            orderType: orderType,
+            paymentMethod: 'online',
+            address: orderType === 'delivery' ? document.getElementById('orderAddress').value : 'Pickup from store',
+            table: orderType === 'pickup' ? 'Pickup' : 'Delivery',
+            distance: detectedDistanceKm ? `${detectedDistanceKm} km` : null,
+            items: cart,
+            subtotal: `Rs. ${subtotal}`,
+            deliveryCharge: deliveryCharge > 0 ? `Rs. ${deliveryCharge}` : 'Free',
+            total: `Rs. ${grandTotal}`,
+            status: 'pending',
+            date: new Date().toLocaleString(),
+            timestamp: Date.now()
+        };
+
+        const existingOrders = JSON.parse(localStorage.getItem('noir_orders')) || [];
+        existingOrders.unshift(orderData);
+        localStorage.setItem('noir_orders', JSON.stringify(existingOrders));
+
+        const myOrders = JSON.parse(localStorage.getItem('noir_my_orders')) || [];
+        myOrders.unshift({ id: orderId, timestamp: Date.now() });
+        localStorage.setItem('noir_my_orders', JSON.stringify(myOrders));
+
+        cart = [];
+        updateCartUI();
+        renderActiveOrders();
+        checkoutModal.classList.remove('active');
+        closeCart();
+        showToast('Payment Successful! Order placed.', '💰');
+        checkoutForm.reset();
+    }
 
     // === Order Tracking ===
     let countdownInterval = null; // track interval so we can clear it

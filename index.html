@@ -171,7 +171,6 @@
                         <div class="order-type-toggle">
                             <button type="button" class="order-type-btn active" id="btnDelivery" onclick="selectOrderType('delivery')">
                                 🚚 Delivery
-                                <span class="order-type-badge">+Rs.250</span>
                             </button>
                             <button type="button" class="order-type-btn" id="btnPickup" onclick="selectOrderType('pickup')">
                                 🏪 Pickup
@@ -179,6 +178,18 @@
                             </button>
                         </div>
                         <input type="hidden" id="orderType" value="delivery">
+                        
+                        <!-- NEW: Payment Method Toggle -->
+                        <div class="checkout-section-label">💳 Payment Method</div>
+                        <div class="payment-type-toggle">
+                            <button type="button" class="payment-type-btn active" id="payCash" onclick="selectPaymentMethod('cash')">
+                                <span id="cashIcon">💵</span> <span id="cashLabel">Cash on Delivery</span>
+                            </button>
+                            <button type="button" class="payment-type-btn" id="payOnline" onclick="selectPaymentMethod('online')">
+                                💳 Online Payment
+                            </button>
+                        </div>
+                        <input type="hidden" id="paymentMethod" value="cash">
 
                         <div class="checkout-section-label">📋 Your Details</div>
                         <div class="checkout-field-group">
@@ -209,7 +220,7 @@
                                 <button type="button" id="detectLocationBtn" class="location-detect-btn" onclick="detectLocation()">
                                     📍 Detect My Location
                                 </button>
-                                <div id="distanceInfo" style="font-size:0.72rem;margin-top:5px;color:#888;">Location not detected — Zone 1 rate (Rs.250) applies</div>
+                                <div id="distanceInfo" style="font-size:0.72rem;margin-top:5px;color:#ec7063;">Location detection required for delivery</div>
                             </div>
                         </div>
                     </div>
@@ -224,13 +235,94 @@
 
                 <!-- Submit -->
                 <div class="checkout-submit-wrap">
-                    <button type="submit" class="checkout-submit-btn">
-                        <span>Place Order</span>
+                    <button type="submit" class="checkout-submit-btn" id="placeOrderBtn">
+                        <span id="placeOrderText">Place Order</span>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
                 </div>
             </form>
 
+        </div>
+    </div>
+
+    <!-- 💳 Card Payment Modal (Simulated Visa) -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content payment-modal-content">
+            <div class="payment-header">
+                <div class="payment-title">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" alt="Visa" class="visa-logo">
+                    <h3>Secure Checkout</h3>
+                </div>
+                <button class="modal-close" id="paymentClose">✕</button>
+            </div>
+            
+            <div class="payment-body">
+                <!-- Merchant info hidden as per user request -->
+
+                <div class="payment-card-preview">
+                    <div class="card-bg-glow"></div>
+                    <div class="card-chip"></div>
+                    <div class="card-number-display" id="previewCardNumber">•••• •••• •••• ••••</div>
+                    <div class="card-bottom">
+                        <div class="card-holder-display" id="previewCardName">CARD HOLDER</div>
+                        <div class="card-expiry-display" id="previewCardExpiry">MM/YY</div>
+                    </div>
+                </div>
+
+                <form id="cardPaymentForm" class="payment-form">
+                    <div class="payment-fields-grid">
+                        <!-- Card Number -->
+                        <div class="payment-field-wrap full">
+                            <label>Card Number</label>
+                            <div class="payment-field-inner">
+                                <span class="field-icon">🔒</span>
+                                <input type="text" id="cardNumber" placeholder="4xxx xxxx xxxx xxxx" maxlength="19" required>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" alt="Visa" class="input-card-logo">
+                            </div>
+                        </div>
+
+                        <!-- Expiry and CVV -->
+                        <div class="payment-field-wrap">
+                            <label>Expiry Date</label>
+                            <div class="payment-field-inner">
+                                <span class="field-icon">📅</span>
+                                <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" required>
+                            </div>
+                        </div>
+                        <div class="payment-field-wrap">
+                            <label>CVV code</label>
+                            <div class="payment-field-inner">
+                                <span class="field-icon">🛡️</span>
+                                <input type="password" id="cardCvv" placeholder="•••" maxlength="3" required>
+                            </div>
+                        </div>
+
+                        <!-- Holder Name -->
+                        <div class="payment-field-wrap full">
+                            <label>Cardholder Name</label>
+                            <div class="payment-field-inner">
+                                <span class="field-icon">👤</span>
+                                <input type="text" id="cardName" placeholder="NAME ON CARD" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-total-bar">
+                        <div class="total-label">Amount due</div>
+                        <div class="total-amount" id="paymentTotalAmount">Rs. 0</div>
+                    </div>
+
+                    <button type="submit" class="confirm-payment-btn" id="confirmPaymentBtn">
+                        <span>Securely Pay Now</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                    
+                    <div class="payment-security-footer">
+                        <span class="security-dot"></span>
+                        AES-256 Bit SSL Encrypted Management
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
